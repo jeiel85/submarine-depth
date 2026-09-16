@@ -420,7 +420,7 @@
 
     .modal-box {
       width: 90%;
-      max-width: 800px;
+      max-width: 820px;
       max-height: 85vh;
       background: #051220;
       border: 2px solid var(--hud-cyan);
@@ -619,16 +619,22 @@
     }
 
     .lore-intro {
-      max-width: 620px;
+      max-width: 650px;
       font-size: 13px;
       line-height: 1.7;
       color: #a0c8de;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
       background: rgba(0, 20, 35, 0.65);
       border: 1px solid rgba(0, 240, 255, 0.3);
       border-radius: 4px;
       padding: 16px 22px;
       text-align: left;
+    }
+
+    .splash-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
     .btn-launch {
@@ -697,8 +703,8 @@
       background: rgba(0, 40, 70, 0.4);
     }
 
-    /* Audio Mute Button */
-    .btn-audio {
+    /* Action Buttons */
+    .btn-icon {
       width: 34px;
       height: 34px;
       padding: 0;
@@ -719,30 +725,30 @@
         <!-- Gauges Box -->
         <div class="hud-box gauge-container">
           <div class="hud-title">
-            <span>잠수정 상태 // NAUTILUS-IV</span>
+            <span id="ui-sub-status">잠수정 상태 // NAUTILUS-IV</span>
             <span id="speed-indicator">0.0 kn</span>
           </div>
           <!-- Hull -->
           <div class="gauge-row">
-            <span class="gauge-label">선체(HULL)</span>
+            <span class="gauge-label" id="lbl-hull">선체(HULL)</span>
             <div class="gauge-track"><div id="gauge-hull" class="gauge-fill hull" style="width: 100%;"></div></div>
             <span id="val-hull" class="gauge-val">100%</span>
           </div>
           <!-- Oxygen -->
           <div class="gauge-row">
-            <span class="gauge-label">산소(O2)</span>
+            <span class="gauge-label" id="lbl-oxy">산소(O2)</span>
             <div class="gauge-track"><div id="gauge-oxy" class="gauge-fill oxygen" style="width: 100%;"></div></div>
             <span id="val-oxy" class="gauge-val">100%</span>
           </div>
           <!-- Battery -->
           <div class="gauge-row">
-            <span class="gauge-label">전력(PWR)</span>
+            <span class="gauge-label" id="lbl-bat">전력(PWR)</span>
             <div class="gauge-track"><div id="gauge-bat" class="gauge-fill battery" style="width: 100%;"></div></div>
             <span id="val-bat" class="gauge-val">100%</span>
           </div>
           <!-- Noise (dB) -->
           <div class="gauge-row">
-            <span class="gauge-label">음향(NOISE)</span>
+            <span class="gauge-label" id="lbl-noise">음향(NOISE)</span>
             <div class="gauge-track"><div id="gauge-noise" class="gauge-fill noise" style="width: 10%;"></div></div>
             <span id="val-noise" class="gauge-val">12 dB</span>
           </div>
@@ -751,7 +757,7 @@
         <!-- Depth & Nav Center -->
         <div class="hud-center-top">
           <div class="depth-display">
-            <div style="font-size: 10px; color: #88c0d0; letter-spacing: 1px;">CURRENT DEPTH</div>
+            <div id="ui-current-depth-lbl" style="font-size: 10px; color: #88c0d0; letter-spacing: 1px;">CURRENT DEPTH</div>
             <div id="depth-readout" class="depth-number">0.0 m</div>
             <div id="depth-rating" class="depth-limit">SAFE CRUSH LIMIT: 400 m</div>
           </div>
@@ -774,11 +780,11 @@
           </div>
           <div class="hud-box" style="min-width: 190px;">
             <div class="hud-title">
-              <span>화물창 / 자금</span>
+              <span id="ui-cargo-title">화물창 / 자금</span>
               <span id="credits-readout" style="color: #ffd700; font-weight: bold;">0 CR</span>
             </div>
             <div style="font-size: 11px; color: #9feaff; display: flex; justify-content: space-between;">
-              <span>적재 용량:</span>
+              <span id="ui-cargo-cap-lbl">적재 용량:</span>
               <span id="cargo-readout">0 / 15 단위</span>
             </div>
             <div style="font-size: 10px; color: #7ba8be; margin-top: 4px;" id="relic-status">
@@ -793,16 +799,15 @@
 
       <!-- Bottom HUD -->
       <div class="hud-bottom">
-        <div class="hud-box controls-reminder">
-          <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 추진 기동 | <kbd>마우스 좌클릭</kbd> 채굴 레이저/로봇 암</div>
-          <div><kbd>Q</kbd> / <kbd>E</kbd> 헤드라이트 점등/소등 (정숙 주행) | <kbd>F</kbd> 액티브 소나 핑</div>
-          <div><kbd>SPACE</kbd> 충격파 EMP 펄스 (언락 시) | <kbd>C</kbd> 탐사 도감 | <kbd>M</kbd> 모선 귀환 신호</div>
+        <div class="hud-box controls-reminder" id="ui-controls-reminder">
+          <!-- Injected via i18n -->
         </div>
 
         <div class="action-buttons">
-          <button id="btn-audio-toggle" class="hud-btn btn-audio" title="음향 토글">🔊</button>
-          <button id="btn-open-codex" class="hud-btn">📖 해양 도감 [C]</button>
-          <button id="btn-dock-manual" class="hud-btn" style="display: none; background: rgba(0, 240, 255, 0.35); color: #fff; font-weight: bold;">⚓ 모선 도킹 [E]</button>
+          <button id="btn-lang-toggle" class="hud-btn" title="언어 전환 / Switch Language">🌐 한국어</button>
+          <button id="btn-audio-toggle" class="hud-btn btn-icon" title="음향 토글">🔊</button>
+          <button id="btn-open-codex" class="hud-btn"><span id="ui-btn-codex">📖 해양 도감 [C]</span></button>
+          <button id="btn-dock-manual" class="hud-btn" style="display: none; background: rgba(0, 240, 255, 0.35); color: #fff; font-weight: bold;">⚓ <span id="ui-btn-dock">모선 도킹 [E]</span></button>
         </div>
       </div>
     </div>
@@ -812,26 +817,26 @@
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-title">
-            <span>⚓ 모선 기지 'CSS ORCA' 도킹 베이</span>
+            <span id="ui-dock-title">⚓ 모선 기지 'CSS ORCA' 도킹 베이</span>
           </div>
           <button class="modal-close" onclick="game.closeDocking()">✕</button>
         </div>
         <div class="modal-body">
           <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,30,55,0.75); padding: 10px 16px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.25);">
             <div>
-              <div style="font-size: 13px; font-weight: bold; color: var(--hud-cyan);">선체 정비 & 자원 정산 완료</div>
-              <div style="font-size: 11px; color: #88c0d0;">선체 내구도, 배터리, 산소가 100% 완전 재충전되었습니다.</div>
+              <div id="ui-dock-refuel-title" style="font-size: 13px; font-weight: bold; color: var(--hud-cyan);">선체 정비 & 자원 정산 완료</div>
+              <div id="ui-dock-refuel-sub" style="font-size: 11px; color: #88c0d0;">선체 내구도, 배터리, 산소가 100% 완전 재충전되었습니다.</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 11px; color: #aaa;">보유 크레딧</div>
+              <div id="ui-dock-credits-lbl" style="font-size: 11px; color: #aaa;">보유 크레딧</div>
               <div id="dock-credits" style="font-size: 22px; font-weight: bold; color: #ffd700;">0 CR</div>
             </div>
           </div>
 
           <div class="tabs">
-            <button class="tab-btn active" onclick="game.switchTab('upgrades', this)">잠수정 개조 업그레이드</button>
-            <button class="tab-btn" onclick="game.switchTab('cargo', this)">채굴 자원 거래소</button>
-            <button class="tab-btn" onclick="game.switchTab('mission', this)">탐사 지령 & 선구자 신호</button>
+            <button class="tab-btn active" id="tab-btn-upgrades" onclick="game.switchTab('upgrades', this)">잠수정 개조 업그레이드</button>
+            <button class="tab-btn" id="tab-btn-cargo" onclick="game.switchTab('cargo', this)">채굴 자원 거래소</button>
+            <button class="tab-btn" id="tab-btn-mission" onclick="game.switchTab('mission', this)">탐사 지령 & 선구자 신호</button>
           </div>
 
           <!-- Upgrade Tab -->
@@ -850,23 +855,13 @@
 
           <!-- Mission Tab -->
           <div id="tab-mission" class="tab-content" style="display: none;">
-            <div style="background: rgba(0,25,45,0.65); padding: 16px; border-radius: 4px; line-height: 1.7; border: 1px solid rgba(0, 240, 255, 0.2);">
-              <h4 style="color: var(--hud-cyan); margin-bottom: 10px; font-size: 14px;">[극비 지령: 하달 프로토콜 (Hadal Protocol)]</h4>
-              <p style="color: #c0e0f0; margin-bottom: 12px;">
-                외계 해양 행성 칼립소-9의 수심 1,500m 암흑 해구 바닥에서 기원전 외계 선구자 문명의 양자 신호가 포착되었습니다.
-              </p>
-              <ul style="padding-left: 20px; color: #9feaff; margin-bottom: 14px; line-height: 1.8;">
-                <li>심해 450m 유적 알파: [선구자 침몰 제단] 암호 키 I 인양</li>
-                <li>심해 950m 유적 베타: [레비아탄 무덤 성소] 암호 키 II 인양</li>
-                <li>심해 1,380m 유적 감마: [양자 첨탑 성소] 암호 키 III 인양</li>
-                <li>심해 1,500m 해구 최심부: [선구자 송신기 코어]에 3개의 키를 삽입하여 활성화</li>
-              </ul>
-              <div id="mission-progress-box" style="font-weight: bold; color: #ffd700; font-size: 13px;"></div>
+            <div id="mission-panel-content" style="background: rgba(0,25,45,0.65); padding: 16px; border-radius: 4px; line-height: 1.7; border: 1px solid rgba(0, 240, 255, 0.2);">
+              <!-- Injected via i18n -->
             </div>
           </div>
 
           <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-            <button class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 10px 24px;" onclick="game.closeDocking()">
+            <button id="ui-btn-undock" class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 10px 24px;" onclick="game.closeDocking()">
               출항하기 (UNDOCK & DIVE)
             </button>
           </div>
@@ -879,15 +874,15 @@
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-title">
-            <span>📖 심해 생태계 & 탐사 도감 (CODEX)</span>
+            <span id="ui-codex-title">📖 심해 생태계 & 탐사 도감 (CODEX)</span>
           </div>
           <button class="modal-close" onclick="game.closeCodex()">✕</button>
         </div>
         <div class="modal-body">
           <div class="tabs">
-            <button class="tab-btn active" onclick="game.switchCodexTab('fauna', this)">심해 생물체</button>
-            <button class="tab-btn" onclick="game.switchCodexTab('minerals', this)">광물 & 자원</button>
-            <button class="tab-btn" onclick="game.switchCodexTab('lore', this)">발견된 유적 & 로그</button>
+            <button class="tab-btn active" id="tab-codex-fauna" onclick="game.switchCodexTab('fauna', this)">심해 생물체</button>
+            <button class="tab-btn" id="tab-codex-minerals" onclick="game.switchCodexTab('minerals', this)">광물 & 자원</button>
+            <button class="tab-btn" id="tab-codex-lore" onclick="game.switchCodexTab('lore', this)">발견된 유적 & 로그</button>
           </div>
           <div id="codex-content" class="codex-list">
             <!-- Injected via JS -->
@@ -900,7 +895,7 @@
     <div id="gameover-modal" class="modal-backdrop">
       <div class="modal-box" style="border-color: var(--hud-red); max-width: 520px; text-align: center;">
         <div class="modal-header" style="background: rgba(50, 10, 15, 0.85);">
-          <div class="modal-title" style="color: var(--hud-red); width: 100%; text-align: center;">
+          <div class="modal-title" id="ui-gameover-title" style="color: var(--hud-red); width: 100%; text-align: center;">
             ⚠️ 잠수정 침몰 / 선체 완전 파괴
           </div>
         </div>
@@ -908,10 +903,10 @@
           <p id="gameover-reason" style="font-size: 14px; color: #ff9999; line-height: 1.6; margin: 15px 0;">
             심해의 맹렬한 수압에 선체가 압괴되었거나 포식자에게 파괴되었습니다.
           </p>
-          <div style="font-size: 12px; color: #88a; margin-bottom: 20px;">
+          <div id="ui-gameover-sub" style="font-size: 12px; color: #88a; margin-bottom: 20px;">
             모선 CSS ORCA의 비상 인양 드론이 조종사 탈출 캡슐을 긴급 회수했습니다. 미정산 화물은 유실되었으나 모든 업그레이드와 획득한 암호 키는 보존됩니다.
           </div>
-          <button class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 12px 28px;" onclick="game.respawnAtMothership()">
+          <button id="ui-btn-respawn" class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 12px 28px;" onclick="game.respawnAtMothership()">
             모선에서 긴급 재출항
           </button>
         </div>
@@ -922,23 +917,23 @@
     <div id="victory-modal" class="modal-backdrop">
       <div class="modal-box" style="max-width: 620px; border-color: #ffd700; box-shadow: 0 0 45px rgba(255, 215, 0, 0.5);">
         <div class="modal-header" style="background: rgba(45, 35, 5, 0.85);">
-          <div class="modal-title" style="color: #ffd700;">
+          <div class="modal-title" id="ui-victory-title" style="color: #ffd700;">
             <span>🏆 미션 성공: 선구자의 신호 송출 완료</span>
           </div>
         </div>
         <div class="modal-body" style="line-height: 1.7;">
-          <p style="font-size: 14px; color: #ffe680;">
+          <p id="ui-victory-desc1" style="font-size: 14px; color: #ffe680;">
             수심 1,500m 암흑 해구 바닥에서 고대 외계 선구자의 송신기 코어가 눈부신 에메랄드빛 양자 광선을 뿜으며 각성했습니다!
           </p>
-          <p style="color: #c0d8e8; font-size: 12px;">
+          <p id="ui-victory-desc2" style="color: #c0d8e8; font-size: 12px;">
             행성 칼립소-9의 수억 년간 잠들어 있던 고대 문명의 데이터와 해양 생태계 조사가 모선 'CSS ORCA'와 지구 연합 본부로 전송되었습니다. 당신은 심해의 극한 수압과 거대 레비아탄의 공포를 이겨내고 인류 역사상 가장 위대한 심해 탐험가로 기록될 것입니다.
           </p>
           <div style="background: rgba(0,25,40,0.85); border: 1px solid #ffd700; border-radius: 4px; padding: 14px; margin: 12px 0;">
-            <div style="color: #ffd700; font-weight: bold; margin-bottom: 8px;">[탐사 결산 리포트]</div>
+            <div id="ui-victory-report-title" style="color: #ffd700; font-weight: bold; margin-bottom: 8px;">[탐사 결산 리포트]</div>
             <div id="victory-stats" style="font-size: 12px; color: #9feaff; line-height: 1.8;"></div>
           </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="hud-btn" style="background: #ffd700; color: #02070e; font-weight: bold;" onclick="game.continueFreeplay()">
+            <button id="ui-btn-continue" class="hud-btn" style="background: #ffd700; color: #02070e; font-weight: bold;" onclick="game.continueFreeplay()">
               심해 무한 탐험 계속하기
             </button>
           </div>
@@ -949,25 +944,259 @@
     <!-- Launch / Splash Intro -->
     <div id="splash-screen">
       <div class="title-glitch">ABYSSAL HORIZON</div>
-      <div class="subtitle">PROJECT HADAL: SUBMARINE SURVIVAL SIMULATION</div>
-      <div class="lore-intro">
-        <strong>[칼립소-9 해양 행성 탐사 브리핑]</strong><br>
-        수심 1,500m 초심해저 마리아나급 해구에서 출처 불명의 인공 외계 양자 신호가 수신되었습니다.<br><br>
-        귀하는 탐사 잠수정 <strong>'노틸러스-IV'</strong>의 단독 조종사로서 칠흑 같은 심해로 잠항하여 수압과 산소 결핍, 음향을 쫓는 미지의 거대 심해 괴수의 위협을 뚫고 3개의 외계 암호 키를 수집하여 신호기를 활성화해야 합니다.<br><br>
-        • 조명을 끄고 저속 운항하여 괴수를 피하십시오 (정숙 주행).<br>
-        • 소나 핑으로 칠흑 속 지형을 파악하되 소음에 주의하십시오.<br>
-        • 채굴한 광물로 모선에서 잠수정 내압 선체와 설비를 개조하십시오.
+      <div class="subtitle" id="ui-splash-subtitle">PROJECT HADAL: SUBMARINE SURVIVAL SIMULATION</div>
+      <div class="lore-intro" id="ui-splash-lore">
+        <!-- Injected via i18n -->
       </div>
-      <button class="btn-launch" onclick="game.startDive()">
-        잠수정 시동 및 잠항 개시 (DIVE)
-      </button>
+      <div class="splash-controls">
+        <button class="btn-launch" id="ui-btn-dive" onclick="game.startDive()">
+          잠수정 시동 및 잠항 개시 (DIVE)
+        </button>
+        <button class="hud-btn" id="btn-splash-lang" onclick="game.toggleLanguage()" style="padding: 12px 18px; font-size: 13px;">
+          🌐 한국어 / English
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
     /* ==========================================================================
-       ABYSSAL HORIZON: PROJECT HADAL - Standalone Core System
+       ABYSSAL HORIZON: PROJECT HADAL - Standalone i18n Simulation System
        ========================================================================== */
+
+    // --- MULTI-LANGUAGE (i18n) DICTIONARY ---
+    const I18N = {
+      ko: {
+        langName: '🌐 한국어',
+        subStatus: '잠수정 상태 // NAUTILUS-IV',
+        hull: '선체(HULL)',
+        oxy: '산소(O2)',
+        bat: '전력(PWR)',
+        noise: '음향(NOISE)',
+        currentDepth: '현재 수심 (CURRENT DEPTH)',
+        safeCrush: '안전 한계 수심: {depth} m',
+        dangerCrush: '⚠️ 위험! 수압 한계: {depth} m 초과',
+        lightsOnBadge: '조명 점등 [Q]',
+        lightsOffBadge: '조명 소등 [Q]',
+        normalRunBadge: '일반 기동',
+        silentRunBadge: '정숙 주행 [은신]',
+        sonarReadyBadge: '소나 준비완료 [F]',
+        cargoTitle: '화물창 / 자금',
+        cargoCapLbl: '적재 용량:',
+        units: '단위',
+        relicKeyStatus: '고대 유물 키: {count} / 3 회수',
+        controls: '<div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 추진 기동 | <kbd>마우스 좌클릭</kbd> 채굴 레이저/로봇 암</div>' +
+                  '<div><kbd>Q</kbd> / <kbd>E</kbd> 헤드라이트 점등/소등 (정숙 주행) | <kbd>F</kbd> 액티브 소나 핑</div>' +
+                  '<div><kbd>SPACE</kbd> 충격파 EMP 펄스 (언락 시) | <kbd>C</kbd> 탐사 도감 | <kbd>M</kbd> 모선 귀환 신호</div>',
+        btnCodex: '📖 해양 도감 [C]',
+        btnDock: '모선 도킹 [E]',
+        dockTitle: '⚓ 모선 기지 \'CSS ORCA\' 도킹 베이',
+        dockRefuelTitle: '선체 정비 & 자원 정산 완료',
+        dockRefuelSub: '선체 내구도, 배터리, 산소가 100% 완전 재충전되었습니다.',
+        dockCreditsLbl: '보유 크레딧',
+        tabUpgrades: '잠수정 개조 업그레이드',
+        tabCargo: '채굴 자원 거래소',
+        tabMission: '탐사 지령 & 선구자 신호',
+        btnUndock: '출항하기 (UNDOCK & DIVE)',
+        codexTitle: '📖 심해 생태계 & 탐사 도감 (CODEX)',
+        tabCodexFauna: '심해 생물체',
+        tabCodexMinerals: '광물 & 자원',
+        tabCodexLore: '발견된 유적 & 로그',
+        gameoverTitle: '⚠️ 잠수정 침몰 / 선체 완전 파괴',
+        gameoverSub: '모선 CSS ORCA의 비상 인양 드론이 조종사 탈출 캡슐을 긴급 회수했습니다. 미정산 화물은 유실되었으나 모든 업그레이드와 획득한 암호 키는 보존됩니다.',
+        btnRespawn: '모선에서 긴급 재출항',
+        victoryTitle: '🏆 미션 성공: 선구자의 신호 송출 완료',
+        victoryDesc1: '수심 1,500m 암흑 해구 바닥에서 고대 외계 선구자의 송신기 코어가 눈부신 에메랄드빛 양자 광선을 뿜으며 각성했습니다!',
+        victoryDesc2: '행성 칼립소-9의 수억 년간 잠들어 있던 고대 문명의 데이터와 해양 생태계 조사가 모선 \'CSS ORCA\'와 지구 연합 본부로 전송되었습니다. 당신은 심해의 극한 수압과 거대 레비아탄의 공포를 이겨내고 인류 역사상 가장 위대한 심해 탐험가로 기록될 것입니다.',
+        victoryReportTitle: '[탐사 결산 리포트]',
+        btnContinue: '심해 무한 탐험 계속하기',
+        splashSubtitle: 'PROJECT HADAL: 심해 잠수정 서바이벌 시뮬레이션',
+        splashLore: '<strong>[칼립소-9 해양 행성 탐사 브리핑]</strong><br>' +
+                   '수심 1,500m 초심해저 마리아나급 해구에서 출처 불명의 인공 외계 양자 신호가 수신되었습니다.<br><br>' +
+                   '귀하는 탐사 잠수정 <strong>\'노틸러스-IV\'</strong>의 단독 조종사로서 칠흑 같은 심해로 잠항하여 수압과 산소 결핍, 음향을 쫓는 미지의 거대 심해 괴수의 위협을 뚫고 3개의 외계 암호 키를 수집하여 신호기를 활성화해야 합니다.<br><br>' +
+                   '• 조명을 끄고 저속 운항하여 괴수를 피하십시오 (정숙 주행).<br>' +
+                   '• 소나 핑으로 칠흑 속 지형을 파악하되 소음에 주의하십시오.<br>' +
+                   '• 채굴한 광물로 모선에서 잠수정 내압 선체와 설비를 개조하십시오.',
+        btnDive: '잠수정 시동 및 잠항 개시 (DIVE)',
+        missionPanel: '<h4 style="color: var(--hud-cyan); margin-bottom: 10px; font-size: 14px;">[극비 지령: 하달 프로토콜 (Hadal Protocol)]</h4>' +
+                      '<p style="color: #c0e0f0; margin-bottom: 12px;">외계 해양 행성 칼립소-9의 수심 1,500m 암흑 해구 바닥에서 기원전 외계 선구자 문명의 양자 신호가 포착되었습니다.</p>' +
+                      '<ul style="padding-left: 20px; color: #9feaff; margin-bottom: 14px; line-height: 1.8;">' +
+                      '  <li>심해 450m 유적 알파: [선구자 침몰 제단] 암호 키 I 인양</li>' +
+                      '  <li>심해 950m 유적 베타: [레비아탄 무덤 성소] 암호 키 II 인양</li>' +
+                      '  <li>심해 1,380m 유적 감마: [양자 첨탑 성소] 암호 키 III 인양</li>' +
+                      '  <li>심해 1,500m 해구 최심부: [선구자 송신기 코어]에 3개의 키를 삽입하여 활성화</li>' +
+                      '</ul>' +
+                      '<div id="mission-progress-box" style="font-weight: bold; color: #ffd700; font-size: 13px;"></div>',
+        marketRateTitle: '[자원 거래소 시장 시세]',
+        marketRateSub: '모선 도킹 시 수납된 모든 광물은 연합 공정 단가에 맞춰 즉시 자동 환전됩니다.',
+        thOreName: '자원 명칭',
+        thOreDepth: '주요 서식/매장 수심',
+        thOreVal: '단위 가치',
+        recentSales: '최근 입항 정산 내역: {count}개 자원 환전 완료',
+        noRecentSales: '최근 채굴 내역 없음',
+        maxTier: '최고 티어',
+        btnBuy: '개조 장착',
+        btnPurchased: '장착 완료',
+        statTime: '• 총 생존 잠항 시간: {min}분 {sec}초',
+        statDepth: '• 최고 심해 잠항 기록: {depth} m',
+        statMined: '• 채굴한 총 광물 수: {mined} 개',
+        statCredits: '• 획득 크레딧: {credits} CR',
+        // Tickers
+        tInitDive: '노틸러스-IV 원자로 가동. 심해 탐항을 시작합니다.',
+        tLightsOn: '헤드라이트 점등: 시야 확보 (빛 감지 포식자 주의)',
+        tLightsOff: '헤드라이트 소등: 정숙 모드 진입',
+        tSonarPing: '능동 소나 핑 방출! (주변 지형 탐지, 음향 스파이크 발생)',
+        tSonarLeviathan: '⚠️ 경고: 소나 반향이 초거대 생명체의 주의를 끌었습니다!',
+        tEmpNotEquipped: '충격파 EMP 펄스 장비가 장착되지 않았습니다. 모선에서 개조하십시오.',
+        tEmpCooldown: 'EMP 충전 중 ({sec}초 남음)',
+        tEmpNoBat: '전력 부족: EMP 발사에 25% 전력이 필요합니다.',
+        tEmpFired: '⚡ EMP 충격파 방출! 주변 유기체 신경계 일시 마비 및 척력 발생',
+        tEmpLevStun: '⚡ 레비아탄 감각 기관 마비 성공! 즉시 도주하십시오.',
+        tMothershipPing: '모선 CSS ORCA 위치: 방위 상방 | 수심 차: {dy}m | 직선거리: {dist}m',
+        tOreBroken: '광맥 채취 완료: {name} 파편 회수 가능',
+        tOreStored: '자원 수납 완료: {name} (+{val} CR 가치)',
+        tCargoFull: '⚠️ 화물창 가득 참! 모선에 도킹하여 환전하십시오.',
+        tProwlerAttack: '⚠️ 경고: 심해 프라울러의 선체 공격! 내구도 손상!',
+        tLevRoar: '🚨 거대 레비아탄 [스킬라]가 잠수정의 음향을 감지하고 돌진합니다!',
+        tLevBite: '🚨 치명적 타격: 레비아탄의 파쇄성 물어뜯기! 선체 대파 위기!',
+        tTerrainCrash: '선체 암초 충돌! 조타에 주의하십시오.',
+        tRelicFound: '⭐ 외계 유물 확보! [선구자 암호 키 #{id} ({glyph})] 회수 성공!',
+        tSettlement: '자원 정산 완료: +{val} CR 획득!',
+        tUndock: '모선 출항 완료. 잠항을 재개합니다.',
+        tUpgradeSuccess: '업그레이드 완료: {upg} 강화 성공!',
+        tVictoryRelay: '선구자 코어 활성화 완료! 자유 탐사 모드로 전환합니다.',
+        tRespawnMsg: '모선 베이스에서 잠수정을 수리하여 재출항했습니다.',
+        tCrushDamage: '⚠️ 경고: 수압 한계 초과! ({depth}m / {limit}m) 선체 균열 발생!',
+        deathOxy: '산소 완전 고갈: 승무원 질식으로 사망했습니다.',
+        deathCrush: '심해 수압 및 선체 파괴: 잠수정이 내압 붕괴로 침몰했습니다.',
+        // Biomes
+        biome1: '표해수대 (0m ~ 150m: 모선 해역)',
+        biome2: '중심해대 (150m ~ 450m: 황혼의 해초 동굴)',
+        biome3: '점해수대 (450m ~ 900m: 암흑 해구)',
+        biome4: '심해저대 (900m ~ 1,300m: 레비아탄 공허)',
+        biome5: '초심해 하달 해구 (1,300m ~ 1,600m: 선구자 신전)',
+        beaconTarget: '신호 [{glyph}]: 수심 {depth}m ({dir})',
+        beaconCore: '주 송신기 코어: 수심 1,500m ({dir})',
+        beaconSearching: '선구자 신호: 탐색 중...',
+        mothershipLabel: 'CSS ORCA // 연구 모선',
+        dockingLabel: '도킹 크래들 [E]'
+      },
+      en: {
+        langName: '🌐 English',
+        subStatus: 'SUB STATUS // NAUTILUS-IV',
+        hull: 'HULL',
+        oxy: 'OXYGEN',
+        bat: 'POWER',
+        noise: 'NOISE',
+        currentDepth: 'CURRENT DEPTH',
+        safeCrush: 'SAFE CRUSH LIMIT: {depth} m',
+        dangerCrush: '⚠️ DANGER! CRUSH LIMIT: {depth} m EXCEEDED',
+        lightsOnBadge: 'LIGHTS ON [Q]',
+        lightsOffBadge: 'LIGHTS OFF [Q]',
+        normalRunBadge: 'NORMAL RUN',
+        silentRunBadge: 'SILENT RUN [STEALTH]',
+        sonarReadyBadge: 'SONAR READY [F]',
+        cargoTitle: 'CARGO HOLD / CREDITS',
+        cargoCapLbl: 'CARGO CAPACITY:',
+        units: 'Units',
+        relicKeyStatus: 'ANCIENT RELIC KEYS: {count} / 3 RECOVERED',
+        controls: '<div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Thrust Propulsion | <kbd>Mouse Left-Click</kbd> Mining Laser / Arm</div>' +
+                  '<div><kbd>Q</kbd> / <kbd>E</kbd> Headlights Toggle (Silent Running) | <kbd>F</kbd> Active Sonar Ping</div>' +
+                  '<div><kbd>SPACE</kbd> EMP Shockwave Pulse (When Upgraded) | <kbd>C</kbd> Marine Codex | <kbd>M</kbd> Mothership Nav Ping</div>',
+        btnCodex: '📖 Marine Codex [C]',
+        btnDock: 'Dock Mothership [E]',
+        dockTitle: '⚓ MOTHERSHIP BASE \'CSS ORCA\' DOCKING CRADLE',
+        dockRefuelTitle: 'Hull Overhaul & Resource Settlement Complete',
+        dockRefuelSub: 'Hull integrity, fusion battery, and oxygen supply fully replenished to 100%.',
+        dockCreditsLbl: 'CREDITS BALANCE',
+        tabUpgrades: 'Submersible Upgrades',
+        tabCargo: 'Mineral Exchange',
+        tabMission: 'Expedition Mission Protocol',
+        btnUndock: 'UNDOCK & DIVE',
+        codexTitle: '📖 Deep Sea Ecosystem & Research Codex',
+        tabCodexFauna: 'Deep Sea Fauna',
+        tabCodexMinerals: 'Minerals & Resources',
+        tabCodexLore: 'Ruins & Audio Logs',
+        gameoverTitle: '⚠️ SUBMERSIBLE DESTROYED / HULL BREACHED',
+        gameoverSub: 'Emergency recovery drone retrieved the pilot escape pod to CSS ORCA. Unsettled cargo was lost, but all submarine upgrades and collected cipher keys are preserved.',
+        btnRespawn: 'RELAUNCH FROM MOTHERSHIP',
+        victoryTitle: '🏆 MISSION SUCCESS: PRECURSOR RELAY BROADCASTING',
+        victoryDesc1: 'At 1,500m on the abyssal trench floor, the Precursor Singularity Relay has awakened, firing a brilliant emerald quantum transmission beam!',
+        victoryDesc2: 'Millennia of ancient planetary data and oceanographic surveys have been successfully uploaded to the CSS ORCA and Earth Command. You have conquered the crushing abyss and will be remembered as mankind\'s greatest deep-sea explorer.',
+        victoryReportTitle: '[EXPEDITION SUMMARY REPORT]',
+        btnContinue: 'CONTINUE FREE EXPLORATION',
+        splashSubtitle: 'PROJECT HADAL: DEEP SEA SUBMARINE SURVIVAL SIMULATION',
+        splashLore: '<strong>[CALYPSO-9 EXPEDITION BRIEFING]</strong><br>' +
+                   'An unknown artificial quantum signal has been detected at the floor of an uncharted 1,500m Mariana-scale oceanic trench.<br><br>' +
+                   'As the solo pilot of the research submersible <strong>\'Nautilus-IV\'</strong>, you must descend into pitch-black depths, survive extreme pressure and oxygen depletion, and bypass sound-hunting apex predators to recover 3 Precursor Cipher Keys and activate the abyssal relay.<br><br>' +
+                   '• Turn off headlights and crawl at low speeds to evade monsters (Silent Running).<br>' +
+                   '• Fire active sonar pings to map dark caverns, but beware of acoustic noise spikes.<br>' +
+                   '• Mine deep-sea minerals to upgrade pressure hull depth ratings and sub systems at the mothership.',
+        btnDive: 'INITIALIZE REACTOR & DIVE',
+        missionPanel: '<h4 style="color: var(--hud-cyan); margin-bottom: 10px; font-size: 14px;">[CLASSIFIED MISSION: HADAL PROTOCOL]</h4>' +
+                      '<p style="color: #c0e0f0; margin-bottom: 12px;">An ancient alien beacon transmission has originated from the 1,500m trench floor on ocean planet Calypso-9.</p>' +
+                      '<ul style="padding-left: 20px; color: #9feaff; margin-bottom: 14px; line-height: 1.8;">' +
+                      '  <li>Depth 450m Ruin Alpha: [Altar of the Sunken] Salvage Cipher Key I</li>' +
+                      '  <li>Depth 950m Ruin Beta: [Deep Maw Sanctum] Salvage Cipher Key II</li>' +
+                      '  <li>Depth 1,380m Ruin Gamma: [Quantum Spire] Salvage Cipher Key III</li>' +
+                      '  <li>Depth 1,500m Trench Floor: Insert all 3 Keys into the Precursor Singularity Core</li>' +
+                      '</ul>' +
+                      '<div id="mission-progress-box" style="font-weight: bold; color: #ffd700; font-size: 13px;"></div>',
+        marketRateTitle: '[MINERAL EXCHANGE MARKET RATES]',
+        marketRateSub: 'All collected ores are automatically converted into federation credits upon docking.',
+        thOreName: 'Mineral Name',
+        thOreDepth: 'Primary Depth Zone',
+        thOreVal: 'Unit Value',
+        recentSales: 'Recent cargo transaction: {count} minerals converted',
+        noRecentSales: 'No recent minerals sold',
+        maxTier: 'MAX TIER',
+        btnBuy: 'UPGRADE',
+        btnPurchased: 'INSTALLED',
+        statTime: '• Total Dive Time: {min}m {sec}s',
+        statDepth: '• Deepest Descent Record: {depth} m',
+        statMined: '• Minerals Mined: {mined} Units',
+        statCredits: '• Total Credits: {credits} CR',
+        // Tickers
+        tInitDive: 'Nautilus-IV reactor online. Descent sequence initiated.',
+        tLightsOn: 'Headlights ON: Visibility restored (Warning: light-sensitive fauna)',
+        tLightsOff: 'Headlights OFF: Entering Silent Running mode',
+        tSonarPing: 'Active Sonar Ping deployed! (Cave topology mapped, noise spike)',
+        tSonarLeviathan: '⚠️ WARNING: Sonar reverberation drew the attention of an apex predator!',
+        tEmpNotEquipped: 'EMP Shockwave defense system is not installed. Upgrade at mothership.',
+        tEmpCooldown: 'EMP recharging ({sec}s remaining)',
+        tEmpNoBat: 'Insufficient Power: EMP requires at least 25% battery.',
+        tEmpFired: '⚡ EMP Shockwave discharged! Creature neural systems stunned.',
+        tEmpLevStun: '⚡ Leviathan sensory organs paralyzed! Evade immediately.',
+        tMothershipPing: 'Mothership CSS ORCA: Bearing UP | Depth Delta: {dy}m | Range: {dist}m',
+        tOreBroken: 'Mineral deposit fractured: {name} chunks released',
+        tOreStored: 'Cargo secured: {name} (+{val} CR value)',
+        tCargoFull: '⚠️ Cargo hold is full! Dock at mothership to liquidate minerals.',
+        tProwlerAttack: '⚠️ WARNING: Abyss Prowler hull impact! Structural damage sustained!',
+        tLevRoar: '🚨 THE HADAL LEVIATHAN [SCYLLA] DETECTED ENGINE SOUNDS AND IS CHARGING!',
+        tLevBite: '🚨 CRITICAL DAMAGE: Leviathan crushing bite attack! Hull breach imminent!',
+        tTerrainCrash: 'Hull collision with ocean bedrock! Maneuver with caution.',
+        tRelicFound: '⭐ ALIEN RELIC SECURED! [Precursor Cipher Key #{id} ({glyph})] recovered!',
+        tSettlement: 'Resource liquidation complete: +{val} CR credited!',
+        tUndock: 'Undocking complete. Resuming submersible descent.',
+        tUpgradeSuccess: 'Upgrade installed: {upg} enhanced successfully!',
+        tVictoryRelay: 'Precursor Relay fully activated! Switching to free exploration mode.',
+        tRespawnMsg: 'Submersible salvaged and refitted at mothership base.',
+        tCrushDamage: '⚠️ DANGER: SAFE CRUSH DEPTH EXCEEDED! ({depth}m / {limit}m) Hull creaking!',
+        deathOxy: 'Oxygen Depleted: Submersible crew asphyxiated.',
+        deathCrush: 'Catastrophic Implosion: Submersible crushed by extreme ocean pressure.',
+        // Biomes
+        biome1: 'Epipelagic Zone (0m ~ 150m: Sunlit Shallows)',
+        biome2: 'Mesopelagic Zone (150m ~ 450m: Twilight Kelp Caves)',
+        biome3: 'Bathypelagic Zone (450m ~ 900m: Midnight Trench)',
+        biome4: 'Abyssopelagic Zone (900m ~ 1,300m: Leviathan Void)',
+        biome5: 'Hadalpelagic Abyss (1,300m ~ 1,600m: Precursor Sanctuary)',
+        beaconTarget: 'Signal [{glyph}]: Depth {depth}m ({dir})',
+        beaconCore: 'Singularity Relay: Depth 1,500m ({dir})',
+        beaconSearching: 'Precursor Signal: Searching...',
+        mothershipLabel: 'CSS ORCA // RESEARCH MOTHERSHIP',
+        dockingLabel: 'DOCKING CRADLE [E]'
+      }
+    };
 
     // --- PROCEDURAL WEB AUDIO ENGINE ---
     class SoundEngine {
@@ -984,12 +1213,10 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
 
-        // Master Volume
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
         this.masterGain.connect(this.ctx.destination);
 
-        // Lowpass filter for deep ocean muffled sound
         this.oceanFilter = this.ctx.createBiquadFilter();
         this.oceanFilter.type = 'lowpass';
         this.oceanFilter.frequency.setValueAtTime(450, this.ctx.currentTime);
@@ -1060,7 +1287,6 @@
         gain.gain.setValueAtTime(0.4, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
 
-        // Ping echo delay node
         const delay = this.ctx.createDelay();
         delay.delayTime.value = 0.45;
         const delayGain = this.ctx.createGain();
@@ -1249,83 +1475,97 @@
     };
 
     const MINERAL_TYPES = {
-      TITANIUM: { id: 'titanium', name: '티타늄(Titanium)', val: 60, color: '#a0b5c0', glow: '#d0e0ff', depthMin: 0, depthMax: 600, size: 9 },
-      COPPER: { id: 'copper', name: '구리(Copper)', val: 120, color: '#d97443', glow: '#ff9060', depthMin: 120, depthMax: 900, size: 8 },
-      QUARTZ: { id: 'quartz', name: '석영 결정(Quartz)', val: 200, color: '#c0f7ff', glow: '#00f0ff', depthMin: 250, depthMax: 1100, size: 10 },
-      LITHIUM: { id: 'lithium', name: '리튬(Lithium)', val: 380, color: '#e055a0', glow: '#ff70c0', depthMin: 500, depthMax: 1400, size: 11 },
-      DARK_MATTER: { id: 'dark_matter', name: '다크매터 결정(Dark Crystal)', val: 750, color: '#8822ff', glow: '#bb55ff', depthMin: 900, depthMax: 1600, size: 13 },
-      PRECURSOR_CUBE: { id: 'relic_cube', name: '선구자 암호 키(Precursor Key)', val: 2500, color: '#ffd700', glow: '#fff080', size: 16, isRelic: true }
+      TITANIUM: { id: 'titanium', nameKo: '티타늄 (Titanium)', nameEn: 'Titanium', val: 60, color: '#a0b5c0', glow: '#d0e0ff', depthMin: 0, depthMax: 600, size: 9 },
+      COPPER: { id: 'copper', nameKo: '구리 (Copper)', nameEn: 'Copper', val: 120, color: '#d97443', glow: '#ff9060', depthMin: 120, depthMax: 900, size: 8 },
+      QUARTZ: { id: 'quartz', nameKo: '석영 결정 (Quartz)', nameEn: 'Quartz Crystal', val: 200, color: '#c0f7ff', glow: '#00f0ff', depthMin: 250, depthMax: 1100, size: 10 },
+      LITHIUM: { id: 'lithium', nameKo: '리튬 (Lithium)', nameEn: 'Lithium', val: 380, color: '#e055a0', glow: '#ff70c0', depthMin: 500, depthMax: 1400, size: 11 },
+      DARK_MATTER: { id: 'dark_matter', nameKo: '다크매터 결정 (Dark Crystal)', nameEn: 'Dark Matter Crystal', val: 750, color: '#8822ff', glow: '#bb55ff', depthMin: 900, depthMax: 1600, size: 13 },
+      PRECURSOR_CUBE: { id: 'relic_cube', nameKo: '선구자 암호 키 (Precursor Key)', nameEn: 'Precursor Cipher Key', val: 2500, color: '#ffd700', glow: '#fff080', size: 16, isRelic: true }
     };
 
     const UPGRADE_DATA = [
       {
         id: 'hull',
-        name: '내압 선체 보강 (Pressure Hull)',
-        desc: '고수압 심해 잠항 한계 수심을 확장합니다.',
+        nameKo: '내압 선체 보강 (Pressure Hull)',
+        nameEn: 'Pressure Hull Reinforcement',
+        descKo: '고수압 심해 잠항 한계 수심을 확장합니다.',
+        descEn: 'Expands the safe crush depth rating in deep water.',
         tiers: [
-          { level: 1, limit: 400, cost: 0, label: 'Mk I (400m 한계)' },
-          { level: 2, limit: 800, cost: 650, label: 'Mk II (800m 한계)' },
-          { level: 3, limit: 1200, cost: 1800, label: 'Mk III (1200m 한계)' },
-          { level: 4, limit: 1600, cost: 4200, label: 'Mk IV (1600m 초심해 허용)' }
+          { level: 1, limit: 400, cost: 0, labelKo: 'Mk I (400m 한계)', labelEn: 'Mk I (400m Limit)' },
+          { level: 2, limit: 800, cost: 650, labelKo: 'Mk II (800m 한계)', labelEn: 'Mk II (800m Limit)' },
+          { level: 3, limit: 1200, cost: 1800, labelKo: 'Mk III (1200m 한계)', labelEn: 'Mk III (1200m Limit)' },
+          { level: 4, limit: 1600, cost: 4200, labelKo: 'Mk IV (1600m 초심해 허용)', labelEn: 'Mk IV (1600m Hadal Abyss)' }
         ]
       },
       {
         id: 'battery',
-        name: '핵융합 배터리 팩 (Fusion Battery)',
-        desc: '전력 저장 용량 및 효율을 증가시킵니다.',
+        nameKo: '핵융합 배터리 팩 (Fusion Battery)',
+        nameEn: 'Fusion Battery Pack',
+        descKo: '전력 저장 용량 및 효율을 증가시킵니다.',
+        descEn: 'Increases electrical power storage capacity and efficiency.',
         tiers: [
-          { level: 1, capacity: 100, cost: 0, label: '100 kWh 기본 셀' },
-          { level: 2, capacity: 180, cost: 450, label: '180 kWh 대용량 팩' },
-          { level: 3, capacity: 300, cost: 1200, label: '300 kWh 핵융합 셀' },
-          { level: 4, capacity: 500, cost: 2800, label: '500 kWh 제로포인트 셀' }
+          { level: 1, capacity: 100, cost: 0, labelKo: '100 kWh 기본 셀', labelEn: '100 kWh Standard Cell' },
+          { level: 2, capacity: 180, cost: 450, labelKo: '180 kWh 대용량 팩', labelEn: '180 kWh Extended Pack' },
+          { level: 3, capacity: 300, cost: 1200, labelKo: '300 kWh 핵융합 셀', labelEn: '300 kWh Fusion Cell' },
+          { level: 4, capacity: 500, cost: 2800, labelKo: '500 kWh 제로포인트 셀', labelEn: '500 kWh Zero-Point Cell' }
         ]
       },
       {
         id: 'lights',
-        name: '초고휘도 LED 탐조등 (Searchlight)',
-        desc: '심해 암흑을 뚫는 헤드라이트 거리와 시야각을 넓힙니다.',
+        nameKo: '초고휘도 LED 탐조등 (Searchlight)',
+        nameEn: 'High-Lumen LED Searchlight',
+        descKo: '심해 암흑을 뚫는 헤드라이트 거리와 시야각을 넓힙니다.',
+        descEn: 'Enhances beam penetration distance and field of illumination.',
         tiers: [
-          { level: 1, range: 240, angle: 0.45, cost: 0, label: '기본 할로겐 (240m 시야)' },
-          { level: 2, range: 360, angle: 0.60, cost: 400, label: '광폭 LED (360m 시야)' },
-          { level: 3, range: 520, angle: 0.80, cost: 1400, label: '양자 투과등 (520m 초장거리)' }
+          { level: 1, range: 240, angle: 0.45, cost: 0, labelKo: '기본 할로겐 (240m 시야)', labelEn: 'Halogen Lamp (240m)' },
+          { level: 2, range: 360, angle: 0.60, cost: 400, labelKo: '광폭 LED (360m 시야)', labelEn: 'Wide-Angle LED (360m)' },
+          { level: 3, range: 520, angle: 0.80, cost: 1400, labelKo: '양자 투과등 (520m 초장거리)', labelEn: 'Quantum Penetrator (520m)' }
         ]
       },
       {
         id: 'engine',
-        name: '이온 추진기 & 정숙 모터 (Ion Thruster)',
-        desc: '추진 속도를 향상시키고 엔진 소음 발생량을 억제합니다.',
+        nameKo: '이온 추진기 & 정숙 모터 (Ion Thruster)',
+        nameEn: 'Ion Thruster & Silent Motor',
+        descKo: '추진 속도를 향상시키고 엔진 소음 발생량을 억제합니다.',
+        descEn: 'Increases cruise speed while damping acoustic signatures.',
         tiers: [
-          { level: 1, speed: 3.2, noiseScale: 1.0, cost: 0, label: '표준 스크루' },
-          { level: 2, speed: 4.5, noiseScale: 0.8, cost: 550, label: '수중 제트 펌프 (+40% 속도)' },
-          { level: 3, speed: 5.8, noiseScale: 0.55, cost: 1600, label: '무소음 이온 드라이브 (정숙 특화)' }
+          { level: 1, speed: 3.2, noiseScale: 1.0, cost: 0, labelKo: '표준 스크루', labelEn: 'Standard Propeller' },
+          { level: 2, speed: 4.5, noiseScale: 0.8, cost: 550, labelKo: '수중 제트 펌프 (+40% 속도)', labelEn: 'Waterjet Pump (+40% Speed)' },
+          { level: 3, speed: 5.8, noiseScale: 0.55, cost: 1600, labelKo: '무소음 이온 드라이브 (정숙 특화)', labelEn: 'Silent Ion Drive (Stealth)' }
         ]
       },
       {
         id: 'emp',
-        name: '충격파 EMP 방어 펄스 (EMP Shockwave)',
-        desc: '[SPACE] 키로 360도 전자기 방출! 포식자를 기절시키고 밀쳐냅니다.',
+        nameKo: '충격파 EMP 방어 펄스 (EMP Shockwave)',
+        nameEn: 'EMP Shockwave Defense System',
+        descKo: '[SPACE] 키로 360도 전자기 방출! 포식자를 기절시키고 밀쳐냅니다.',
+        descEn: 'Press [SPACE] to fire 360° EMP! Stuns and repels deep sea predators.',
         tiers: [
-          { level: 0, unlocked: false, cost: 950, label: '미설치 (950 CR)' },
-          { level: 1, unlocked: true, cost: 0, label: '장착 완료 ([SPACE] 발사)' }
+          { level: 0, unlocked: false, cost: 950, labelKo: '미설치 (950 CR)', labelEn: 'Not Installed (950 CR)' },
+          { level: 1, unlocked: true, cost: 0, labelKo: '장착 완료 ([SPACE] 발사)', labelEn: 'Installed ([SPACE] to fire)' }
         ]
       },
       {
         id: 'nanite',
-        name: '자가 수리 나노봇 (Nanite Auto-Repair)',
-        desc: '배터리 여유 시 손상된 선체를 서서히 자동 복구합니다.',
+        nameKo: '자가 수리 나노봇 (Nanite Auto-Repair)',
+        nameEn: 'Nanite Self-Repair Module',
+        descKo: '배터리 여유 시 손상된 선체를 서서히 자동 복구합니다.',
+        descEn: 'Slowly repairs damaged hull when battery power is above 30%.',
         tiers: [
-          { level: 0, unlocked: false, cost: 1800, label: '미설치 (1,800 CR)' },
-          { level: 1, unlocked: true, cost: 0, label: '나노봇 가동 (자동 수리 활성)' }
+          { level: 0, unlocked: false, cost: 1800, labelKo: '미설치 (1,800 CR)', labelEn: 'Not Installed (1,800 CR)' },
+          { level: 1, unlocked: true, cost: 0, labelKo: '나노봇 가동 (자동 수리 활성)', labelEn: 'Active (Auto-Repair online)' }
         ]
       },
       {
         id: 'cargo',
-        name: '화물창 적재 모듈 (Cargo Expansion)',
-        desc: '채굴 광물 및 유물 수납 한도를 늘립니다.',
+        nameKo: '화물창 적재 모듈 (Cargo Expansion)',
+        nameEn: 'Cargo Expansion Bay',
+        descKo: '채굴 광물 및 유물 수납 한도를 늘립니다.',
+        descEn: 'Increases inventory storage capacity for mined minerals.',
         tiers: [
-          { level: 1, cap: 15, cost: 0, label: '15 슬롯 표준 카고' },
-          { level: 2, cap: 30, cost: 350, label: '30 슬롯 확장 카고' },
-          { level: 3, cap: 50, cost: 900, label: '50 슬롯 대용량 카고' }
+          { level: 1, cap: 15, cost: 0, labelKo: '15 슬롯 표준 카고', labelEn: '15 Slots Standard Bay' },
+          { level: 2, cap: 30, cost: 350, labelKo: '30 슬롯 확장 카고', labelEn: '30 Slots Extended Bay' },
+          { level: 3, cap: 50, cost: 900, labelKo: '50 슬롯 대용량 카고', labelEn: '50 Slots Heavy Bay' }
         ]
       }
     ];
@@ -1337,13 +1577,16 @@
         this.ctx = this.canvas.getContext('2d');
         this.sound = new SoundEngine();
 
+        // Language state (default: ko)
+        this.lang = localStorage.getItem('abyssal_horizon_lang') || 'ko';
+
         // Screen Size
         this.width = window.innerWidth;
         this.height = window.innerHeight;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
-        // Optimized persistent offscreen buffer for dynamic lighting mask
+        // Persistent offscreen canvas buffer for dynamic darkness mask
         this.darkCanvas = document.createElement('canvas');
         this.darkCanvas.width = this.width;
         this.darkCanvas.height = this.height;
@@ -1358,7 +1601,7 @@
           y: 120,
           vx: 0,
           vy: 0,
-          angle: Math.PI / 2, // Heading angle
+          angle: Math.PI / 2,
           turretAngle: 0,
           radius: 18,
           hull: 100,
@@ -1367,7 +1610,7 @@
           maxOxygen: 100,
           battery: 100,
           maxBattery: 100,
-          noise: 10, // dB
+          noise: 10,
           lightsOn: true,
           silentMode: false,
           empCooldown: 0,
@@ -1387,7 +1630,7 @@
 
         // Inventory & Resources
         this.credits = 150;
-        this.cargo = []; // [{type, name, val}, ...]
+        this.cargo = [];
         this.relicKeys = { 1: false, 2: false, 3: false };
         this.coreActivated = false;
         this.lastSoldHistory = [];
@@ -1439,9 +1682,79 @@
         this.initInput();
         this.generateWorld();
         this.loadSaveData();
+        this.applyLanguage();
         this.updateHUD();
 
         window.addEventListener('resize', () => this.onResize());
+      }
+
+      t(key, params = {}) {
+        let str = (I18N[this.lang] && I18N[this.lang][key]) || (I18N['en'] && I18N['en'][key]) || key;
+        for (const [k, v] of Object.entries(params)) {
+          str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+        }
+        return str;
+      }
+
+      toggleLanguage() {
+        this.lang = this.lang === 'ko' ? 'en' : 'ko';
+        localStorage.setItem('abyssal_horizon_lang', this.lang);
+        this.applyLanguage();
+        this.showTicker(this.lang === 'ko' ? '언어가 [한국어]로 변경되었습니다.' : 'Language switched to [English].', 'discovery');
+      }
+
+      applyLanguage() {
+        document.documentElement.lang = this.lang;
+        document.getElementById('btn-lang-toggle').textContent = this.lang === 'ko' ? '🌐 한국어' : '🌐 English';
+        document.getElementById('btn-splash-lang').textContent = this.lang === 'ko' ? '🌐 한국어 (KO)' : '🌐 English (EN)';
+
+        // Static UI elements
+        document.getElementById('ui-sub-status').textContent = this.t('subStatus');
+        document.getElementById('lbl-hull').textContent = this.t('hull');
+        document.getElementById('lbl-oxy').textContent = this.t('oxy');
+        document.getElementById('lbl-bat').textContent = this.t('bat');
+        document.getElementById('lbl-noise').textContent = this.t('noise');
+        document.getElementById('ui-current-depth-lbl').textContent = this.t('currentDepth');
+        document.getElementById('ui-cargo-title').textContent = this.t('cargoTitle');
+        document.getElementById('ui-cargo-cap-lbl').textContent = this.t('cargoCapLbl');
+        document.getElementById('ui-controls-reminder').innerHTML = this.t('controls');
+        document.getElementById('ui-btn-codex').textContent = this.t('btnCodex');
+        document.getElementById('ui-btn-dock').textContent = this.t('btnDock');
+
+        // Modals
+        document.getElementById('ui-dock-title').textContent = this.t('dockTitle');
+        document.getElementById('ui-dock-refuel-title').textContent = this.t('dockRefuelTitle');
+        document.getElementById('ui-dock-refuel-sub').textContent = this.t('dockRefuelSub');
+        document.getElementById('ui-dock-credits-lbl').textContent = this.t('dockCreditsLbl');
+        document.getElementById('tab-btn-upgrades').textContent = this.t('tabUpgrades');
+        document.getElementById('tab-btn-cargo').textContent = this.t('tabCargo');
+        document.getElementById('tab-btn-mission').textContent = this.t('tabMission');
+        document.getElementById('ui-btn-undock').textContent = this.t('btnUndock');
+
+        document.getElementById('ui-codex-title').textContent = this.t('codexTitle');
+        document.getElementById('tab-codex-fauna').textContent = this.t('tabCodexFauna');
+        document.getElementById('tab-codex-minerals').textContent = this.t('tabCodexMinerals');
+        document.getElementById('tab-codex-lore').textContent = this.t('tabCodexLore');
+
+        document.getElementById('ui-gameover-title').textContent = this.t('gameoverTitle');
+        document.getElementById('ui-gameover-sub').textContent = this.t('gameoverSub');
+        document.getElementById('ui-btn-respawn').textContent = this.t('btnRespawn');
+
+        document.getElementById('ui-victory-title').textContent = this.t('victoryTitle');
+        document.getElementById('ui-victory-desc1').textContent = this.t('victoryDesc1');
+        document.getElementById('ui-victory-desc2').textContent = this.t('victoryDesc2');
+        document.getElementById('ui-victory-report-title').textContent = this.t('victoryReportTitle');
+        document.getElementById('ui-btn-continue').textContent = this.t('btnContinue');
+
+        document.getElementById('ui-splash-subtitle').textContent = this.t('splashSubtitle');
+        document.getElementById('ui-splash-lore').innerHTML = this.t('splashLore');
+        document.getElementById('ui-btn-dive').textContent = this.t('btnDive');
+
+        document.getElementById('mission-panel-content').innerHTML = this.t('missionPanel');
+
+        this.renderUpgradeUI();
+        this.renderCargoTab();
+        this.updateHUD();
       }
 
       onResize() {
@@ -1462,7 +1775,6 @@
             this.toggleHeadlights();
           }
           if (e.code === 'KeyE') {
-            // Contextual E key: Dock if near mothership, otherwise toggle headlights
             const dist = Math.hypot(this.sub.x - WORLD.MOTHERSHIP_X, this.sub.y - WORLD.MOTHERSHIP_Y);
             if (dist < WORLD.DOCK_RADIUS + 40) {
               this.openDocking();
@@ -1506,6 +1818,10 @@
           }
         });
 
+        document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+          this.toggleLanguage();
+        });
+
         document.getElementById('btn-audio-toggle').addEventListener('click', () => {
           const muted = this.sound.toggleMute();
           document.getElementById('btn-audio-toggle').textContent = muted ? '🔇' : '🔊';
@@ -1524,15 +1840,13 @@
         document.getElementById('splash-screen').style.display = 'none';
         this.sound.init();
         this.sound.playSonarPing();
-        this.showTicker('노틸러스-IV 원자로 가동. 심해 탐항을 시작합니다.', 'discovery');
+        this.showTicker(this.t('tInitDive'), 'discovery');
         requestAnimationFrame((t) => this.loop(t));
       }
 
       // --- WORLD PROCEDURAL GENERATION ---
       generateWorld() {
         const totalHeight = WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS;
-
-        // 1. Generate Cave Walls (Left and Right boundaries with varied chasms)
         this.terrain = [];
         const steps = 160;
         const dy = totalHeight / steps;
@@ -1541,7 +1855,6 @@
           const y = i * dy;
           const depthM = y / WORLD.METERS_TO_PIXELS;
 
-          // Chasm width varies with depth (wider at top, narrower & claustrophobic in the trench)
           const center = WORLD.WIDTH / 2 + Math.sin(i * 0.15) * 220 + Math.cos(i * 0.05) * 350;
           let halfWidth = 750 - (depthM / WORLD.DEPTH_MAX) * 320;
           halfWidth += Math.sin(i * 0.4) * 120 + Math.cos(i * 0.8) * 60;
@@ -1553,7 +1866,6 @@
           this.terrain.push({ y, leftX, rightX, center, depthM });
         }
 
-        // 2. Generate Mineral Nodes along walls and interior ridges
         this.mineralNodes = [];
         for (let i = 4; i < this.terrain.length - 2; i++) {
           const seg = this.terrain[i];
@@ -1590,7 +1902,6 @@
           }
         }
 
-        // 3. Hydrothermal Vents
         this.vents = [
           { x: 1400, y: 350 * 4, temp: '320°C', active: true },
           { x: 1850, y: 680 * 4, temp: '410°C', active: true },
@@ -1598,11 +1909,11 @@
           { x: 1720, y: 1380 * 4, temp: '520°C', active: true }
         ];
 
-        // 4. Ancient Alien Ruins (Precursor Relics)
         this.ruins = [
           {
             id: 1,
-            name: '선구자 침몰 제단 (Altar of the Sunken)',
+            nameKo: '선구자 침몰 제단 (Altar of the Sunken)',
+            nameEn: 'Precursor Altar of the Sunken',
             depth: 450,
             x: 1650,
             y: 450 * WORLD.METERS_TO_PIXELS,
@@ -1612,7 +1923,8 @@
           },
           {
             id: 2,
-            name: '레비아탄 무덤 성소 (Sanctum of the Deep Maw)',
+            nameKo: '레비아탄 무덤 성소 (Sanctum of the Deep Maw)',
+            nameEn: 'Sanctum of the Deep Maw',
             depth: 950,
             x: 1520,
             y: 950 * WORLD.METERS_TO_PIXELS,
@@ -1622,7 +1934,8 @@
           },
           {
             id: 3,
-            name: '선구자 양자 첨탑 (Precursor Quantum Spire)',
+            nameKo: '선구자 양자 첨탑 (Precursor Quantum Spire)',
+            nameEn: 'Precursor Quantum Spire',
             depth: 1380,
             x: 1680,
             y: 1380 * WORLD.METERS_TO_PIXELS,
@@ -1632,7 +1945,8 @@
           },
           {
             id: 'CORE',
-            name: '초심해 선구자 주 송신기 (Precursor Singularity Relay)',
+            nameKo: '초심해 선구자 주 송신기 (Precursor Singularity Relay)',
+            nameEn: 'Precursor Singularity Core Relay',
             depth: 1500,
             x: WORLD.WIDTH / 2,
             y: 1500 * WORLD.METERS_TO_PIXELS,
@@ -1641,15 +1955,13 @@
           }
         ];
 
-        // 5. Marine Fauna Ecosystem
         this.creatures = [];
 
-        // Harmless Bioluminescent Jellyfish (0m - 1200m)
+        // Jellyfish
         for (let i = 0; i < 40; i++) {
           const depth = 80 + Math.random() * 1100;
           this.creatures.push({
             type: 'jellyfish',
-            name: '발광 해파리 (Aura Medusa)',
             x: 1200 + Math.random() * 800,
             y: depth * WORLD.METERS_TO_PIXELS,
             vx: (Math.random() - 0.5) * 0.4,
@@ -1661,12 +1973,11 @@
           });
         }
 
-        // Phantom Rays (150m - 800m)
+        // Phantom Rays
         for (let i = 0; i < 16; i++) {
           const depth = 200 + Math.random() * 650;
           this.creatures.push({
             type: 'phantom_ray',
-            name: '유령 가오리 (Phantom Ray)',
             x: 1300 + Math.random() * 600,
             y: depth * WORLD.METERS_TO_PIXELS,
             vx: (Math.random() - 0.5) * 1.2,
@@ -1678,12 +1989,11 @@
           });
         }
 
-        // Hostile Predator: Abyss Prowlers (400m - 1100m)
+        // Prowlers
         for (let i = 0; i < 9; i++) {
           const depth = 420 + Math.random() * 700;
           this.creatures.push({
             type: 'prowler',
-            name: '심해 프라울러 (Abyss Prowler)',
             x: 1250 + Math.random() * 700,
             y: depth * WORLD.METERS_TO_PIXELS,
             vx: 0,
@@ -1697,10 +2007,9 @@
           });
         }
 
-        // Apex Predator: The Hadal Leviathan (950m - 1550m)
+        // Apex Predator: The Hadal Leviathan
         this.leviathan = {
           type: 'leviathan',
-          name: '하달 레비아탄 [스킬라] (The Hadal Leviathan)',
           x: WORLD.WIDTH / 2,
           y: 1100 * WORLD.METERS_TO_PIXELS,
           vx: 0,
@@ -1731,18 +2040,18 @@
         const badge = document.getElementById('badge-lights');
         if (this.sub.lightsOn) {
           badge.className = 'badge active';
-          badge.textContent = 'LIGHTS ON [Q]';
-          this.showTicker('헤드라이트 점등: 시야 확보 (빛 감지 포식자 주의)', 'ticker');
+          badge.textContent = this.t('lightsOnBadge');
+          this.showTicker(this.t('tLightsOn'), 'ticker');
         } else {
           badge.className = 'badge';
-          badge.textContent = 'LIGHTS OFF [Q]';
-          this.showTicker('헤드라이트 소등: 정숙 모드 진입', 'discovery');
+          badge.textContent = this.t('lightsOffBadge');
+          this.showTicker(this.t('tLightsOff'), 'discovery');
         }
       }
 
       triggerSonarPing() {
         if (this.sub.battery < 8) {
-          this.showTicker('전력 부족: 소나 발사 불가!', 'alert');
+          this.showTicker(this.lang === 'ko' ? '전력 부족: 소나 발사 불가!' : 'Low Battery: Sonar offline!', 'alert');
           return;
         }
         if (this.sonar.cooldown > 0) return;
@@ -1750,36 +2059,33 @@
         this.sub.battery -= 8;
         this.sonar.active = true;
         this.sonar.radius = 20;
-        this.sonar.timer = 10.0; // 10 seconds wireframe visibility
+        this.sonar.timer = 10.0;
         this.sonar.cooldown = 4.0;
-
-        // Big acoustic spike (alerts nearby predators)
         this.sub.noise = Math.max(this.sub.noise, 75);
 
         this.sound.playSonarPing();
-        this.showTicker('능동 소나 핑 방출! (주변 지형 탐지, 음향 스파이크 발생)', 'ticker');
+        this.showTicker(this.t('tSonarPing'), 'ticker');
 
-        // Check if leviathan or prowlers hear it
         const distLev = Math.hypot(this.sub.x - this.leviathan.x, this.sub.y - this.leviathan.y);
         if (distLev < 1600) {
           this.leviathan.aggro = true;
           this.leviathan.aggroTimer = 12.0;
           this.sound.playLeviathanRoar();
-          this.showTicker('⚠️ 경고: 소나 반향이 초거대 생명체의 주의를 끌었습니다!', 'alert');
+          this.showTicker(this.t('tSonarLeviathan'), 'alert');
         }
       }
 
       triggerEmpPulse() {
         if (!this.upgrades.emp) {
-          this.showTicker('충격파 EMP 펄스 장비가 장착되지 않았습니다. 모선에서 개조하십시오.', 'ticker');
+          this.showTicker(this.t('tEmpNotEquipped'), 'ticker');
           return;
         }
         if (this.sub.empCooldown > 0) {
-          this.showTicker(`EMP 충전 중 (${this.sub.empCooldown.toFixed(1)}초 남음)`, 'ticker');
+          this.showTicker(this.t('tEmpCooldown', { sec: this.sub.empCooldown.toFixed(1) }), 'ticker');
           return;
         }
         if (this.sub.battery < 25) {
-          this.showTicker('전력 부족: EMP 발사에 25% 전력이 필요합니다.', 'alert');
+          this.showTicker(this.t('tEmpNoBat'), 'alert');
           return;
         }
 
@@ -1787,9 +2093,8 @@
         this.sub.empCooldown = 15.0;
         this.sound.playEmp();
         this.createShockwaveParticles(this.sub.x, this.sub.y);
-        this.showTicker('⚡ EMP 충격파 방출! 주변 유기체 신경계 일시 마비 및 척력 발생', 'discovery');
+        this.showTicker(this.t('tEmpFired'), 'discovery');
 
-        // Stun nearby creatures
         this.creatures.forEach(c => {
           const d = Math.hypot(c.x - this.sub.x, c.y - this.sub.y);
           if (d < 450) {
@@ -1801,21 +2106,20 @@
           }
         });
 
-        // Stun leviathan
         const distLev = Math.hypot(this.leviathan.x - this.sub.x, this.leviathan.y - this.sub.y);
         if (distLev < 550) {
           this.leviathan.aggro = false;
           this.leviathan.aggroTimer = 0;
           this.leviathan.vx = 0;
           this.leviathan.vy = 0;
-          this.showTicker('⚡ 레비아탄 감각 기관 마비 성공! 즉시 도주하십시오.', 'discovery');
+          this.showTicker(this.t('tEmpLevStun'), 'discovery');
         }
       }
 
       pingMothership() {
         const d = Math.hypot(this.sub.x - WORLD.MOTHERSHIP_X, this.sub.y - WORLD.MOTHERSHIP_Y);
         const depthM = (this.sub.y / WORLD.METERS_TO_PIXELS).toFixed(0);
-        this.showTicker(`모선 CSS ORCA 위치: 방위 상방 | 수심 차: ${depthM}m | 직선거리: ${(d/WORLD.METERS_TO_PIXELS).toFixed(0)}m`, 'ticker');
+        this.showTicker(this.t('tMothershipPing', { dy: depthM, dist: (d/WORLD.METERS_TO_PIXELS).toFixed(0) }), 'ticker');
       }
 
       // --- GAME LOOP ---
@@ -1835,13 +2139,11 @@
       update(dt) {
         this.stats.playTimeSec += dt;
 
-        // Current Depth in meters
         const currentDepthM = Math.max(0, this.sub.y / WORLD.METERS_TO_PIXELS);
         if (currentDepthM > this.stats.maxDepthReached) {
           this.stats.maxDepthReached = currentDepthM;
         }
 
-        // Get Current Tier Stats
         const hullTier = UPGRADE_DATA[0].tiers[this.upgrades.hull - 1];
         const batteryTier = UPGRADE_DATA[1].tiers[this.upgrades.battery - 1];
         const engineTier = UPGRADE_DATA[3].tiers[this.upgrades.engine - 1];
@@ -1866,10 +2168,8 @@
           this.sub.vx += nx * accel * dt;
           this.sub.vy += ny * accel * dt;
 
-          // Battery consumption while moving
           this.sub.battery = Math.max(0, this.sub.battery - 0.75 * dt);
 
-          // Add bubble exhaust
           if (Math.random() < 0.4) {
             this.bubbles.push({
               x: this.sub.x - nx * 18 + (Math.random() - 0.5) * 6,
@@ -1883,45 +2183,33 @@
           }
         }
 
-        // Water drag & viscous damping
         this.sub.vx *= Math.pow(0.88, dt * 60);
         this.sub.vy *= Math.pow(0.88, dt * 60);
-
-        // Gentle natural buoyancy
-        this.sub.vy -= 0.15 * dt;
-
-        // Position update
+        this.sub.vy -= 0.15 * dt; // gentle buoyancy
         this.sub.x += this.sub.vx;
         this.sub.y += this.sub.vy;
 
-        // Heading angle smoothly follows velocity or mouse
         const speed = Math.hypot(this.sub.vx, this.sub.vy);
         if (speed > 0.3) {
-          const moveAngle = Math.atan2(this.sub.vy, this.sub.vx);
-          this.sub.angle = moveAngle;
+          this.sub.angle = Math.atan2(this.sub.vy, this.sub.vx);
         }
 
-        // Turret / Headlight angle aims at mouse in world coordinates
         this.mouse.worldX = this.camera.x + (this.mouse.x - this.width / 2);
         this.mouse.worldY = this.camera.y + (this.mouse.y - this.height / 2);
         this.sub.turretAngle = Math.atan2(this.mouse.worldY - this.sub.y, this.mouse.worldX - this.sub.x);
 
-        // Sound engine update for thruster pitch
         this.sound.updateEngine(Math.min(1.0, speed / 5.0));
 
-        // 2. Battery & Headlights
         if (this.sub.lightsOn && this.sub.battery > 0) {
           this.sub.battery = Math.max(0, this.sub.battery - 0.45 * dt);
         }
 
-        // 3. Oxygen Consumption
         this.sub.oxygen = Math.max(0, this.sub.oxygen - 0.28 * dt);
         if (this.sub.oxygen <= 0) {
-          this.triggerGameOver('산소 완전 고갈: 승무원 질식으로 사망했습니다.');
+          this.triggerGameOver(this.t('deathOxy'));
           return;
         }
 
-        // 4. Acoustic Noise Signature (dB)
         let baseNoise = 10;
         if (isThrusting) {
           baseNoise += (speed * 9.5) * engineTier.noiseScale;
@@ -1929,36 +2217,32 @@
         if (this.laser.active) baseNoise += 25;
         this.sub.noise = (this.sub.noise * 0.92) + (baseNoise * 0.08);
 
-        // Silent mode check
         this.sub.silentMode = (!this.sub.lightsOn && this.sub.noise < 22);
         const silentBadge = document.getElementById('badge-silent');
         if (this.sub.silentMode) {
           silentBadge.className = 'badge silent';
-          silentBadge.textContent = 'SILENT RUN [은신]';
+          silentBadge.textContent = this.t('silentRunBadge');
         } else {
           silentBadge.className = 'badge';
-          silentBadge.textContent = 'NORMAL RUN';
+          silentBadge.textContent = this.t('normalRunBadge');
         }
 
-        // 5. Depth Pressure & Crush Mechanics
         const safeLimitM = hullTier.limit;
         if (currentDepthM > safeLimitM) {
           const exceedRatio = (currentDepthM - safeLimitM) / 100;
           const damagePerSec = 4.0 * exceedRatio;
           this.sub.hull = Math.max(0, this.sub.hull - damagePerSec * dt);
 
-          // Creaking sounds & alarm
           this.creakCheckTimer += dt;
           if (this.creakCheckTimer > 2.5) {
             this.creakCheckTimer = 0;
             this.sound.playHullCreak();
             this.sound.playAlarm();
             this.camera.shake = 6;
-            this.showTicker(`⚠️ 경고: 수압 한계 초과! (${currentDepthM.toFixed(0)}m / ${safeLimitM}m) 선체 균열 발생!`, 'alert');
+            this.showTicker(this.t('tCrushDamage', { depth: currentDepthM.toFixed(0), limit: safeLimitM }), 'alert');
           }
         }
 
-        // Nanite Auto-Repair
         if (this.upgrades.nanite && this.sub.battery > 30 && this.sub.hull < this.sub.maxHull) {
           this.sub.naniteTimer += dt;
           if (this.sub.naniteTimer > 1.0) {
@@ -1968,13 +2252,11 @@
           }
         }
 
-        // Check Hull Death
         if (this.sub.hull <= 0) {
-          this.triggerGameOver('심해 수압 및 선체 파괴: 잠수정이 내압 붕괴로 침몰했습니다.');
+          this.triggerGameOver(this.t('deathCrush'));
           return;
         }
 
-        // Cooldowns
         if (this.sub.empCooldown > 0) this.sub.empCooldown = Math.max(0, this.sub.empCooldown - dt);
         if (this.sonar.cooldown > 0) this.sonar.cooldown = Math.max(0, this.sonar.cooldown - dt);
         if (this.sonar.active) {
@@ -1985,28 +2267,14 @@
           }
         }
 
-        // 6. Terrain Collision Detection
         this.handleTerrainCollision();
-
-        // 7. Mining Laser Action
         this.updateMiningLaser(dt);
-
-        // 8. Floating Minerals Magnet Suction
         this.updateFloatingMinerals(dt);
-
-        // 9. Ecosystem & Creature AI
         this.updateCreatures(dt);
-
-        // 10. Ancient Ruins & Beacon Trigger Check
         this.updateRuins();
-
-        // 11. Mothership Proximity & Auto Dock Prompt
         this.updateMothershipDock();
-
-        // 12. Particles & Bubbles
         this.updateParticles(dt);
 
-        // 13. Camera Tracking with Soft Lerp & Shake
         this.camera.x += (this.sub.x - this.camera.x) * 0.08;
         this.camera.y += (this.sub.y - this.camera.y) * 0.08;
         if (this.camera.shake > 0) {
@@ -2026,7 +2294,7 @@
           return;
         }
 
-        const reach = 240; // Laser range
+        const reach = 240;
         let closestNode = null;
         let closestDist = reach;
 
@@ -2049,7 +2317,6 @@
           this.laser.endY = closestNode.y;
           closestNode.hp -= 45 * dt;
 
-          // Spawn laser cutting sparks
           if (Math.random() < 0.6) {
             this.particles.push({
               x: closestNode.x + (Math.random() - 0.5) * 8,
@@ -2064,7 +2331,6 @@
           }
 
           if (closestNode.hp <= 0) {
-            // Drop floating mineral chunk
             this.floatingMinerals.push({
               x: closestNode.x,
               y: closestNode.y,
@@ -2075,12 +2341,12 @@
               life: 45
             });
 
+            const oreName = this.lang === 'ko' ? closestNode.type.nameKo : closestNode.type.nameEn;
             this.mineralNodes = this.mineralNodes.filter(n => n !== closestNode);
             this.stats.mineralsMined++;
-            this.showTicker(`광맥 채취 완료: ${closestNode.type.name} 파편 회수 가능`, 'ticker');
+            this.showTicker(this.t('tOreBroken', { name: oreName }), 'ticker');
           }
         } else {
-          // Free fire beam into water towards aim cursor
           const aimAngle = this.sub.turretAngle;
           const mouseDist = Math.hypot(this.mouse.worldX - this.sub.x, this.mouse.worldY - this.sub.y);
           const actualDist = Math.min(reach, mouseDist);
@@ -2108,7 +2374,6 @@
           const item = this.floatingMinerals[i];
           const dist = Math.hypot(this.sub.x - item.x, this.sub.y - item.y);
 
-          // Magnetic suction towards submarine
           if (dist < 190) {
             const angle = Math.atan2(this.sub.y - item.y, this.sub.x - item.x);
             const speed = (190 - dist) * 0.085;
@@ -2122,15 +2387,15 @@
           item.y += item.vy;
           item.life -= dt;
 
-          // Pickup collision
           if (dist < this.sub.radius + item.radius) {
             if (this.cargo.length < cargoCap) {
               this.cargo.push(item.type);
               this.sound.playOreCollected();
-              this.showTicker(`자원 수납 완료: ${item.type.name} (+${item.type.val} CR 가치)`, 'ticker');
+              const oreName = this.lang === 'ko' ? item.type.nameKo : item.type.nameEn;
+              this.showTicker(this.t('tOreStored', { name: oreName, val: item.type.val }), 'ticker');
               this.floatingMinerals.splice(i, 1);
             } else {
-              this.showTicker('⚠️ 화물창 가득 참! 모선에 도킹하여 환전하십시오.', 'alert');
+              this.showTicker(this.t('tCargoFull'), 'alert');
             }
           } else if (item.life <= 0) {
             this.floatingMinerals.splice(i, 1);
@@ -2140,7 +2405,6 @@
 
       // --- CREATURE AI & ECOSYSTEM ---
       updateCreatures(dt) {
-        // 1. Swarms & Peaceful Fauna
         this.creatures.forEach(c => {
           if (c.type === 'jellyfish') {
             c.pulseTimer += dt * 2.2;
@@ -2155,7 +2419,6 @@
             c.angle = Math.atan2(c.vy, c.vx);
             if (c.x < 1100 || c.x > 2100) c.vx *= -1;
           } else if (c.type === 'prowler') {
-            // Abyss Prowler AI
             const dist = Math.hypot(this.sub.x - c.x, this.sub.y - c.y);
             const canDetect = (!this.sub.silentMode && (dist < 320 || (this.sub.lightsOn && dist < 450)));
 
@@ -2172,7 +2435,7 @@
                 c.attackCooldown = 3.5;
                 c.vx *= -2;
                 c.vy *= -2;
-                this.showTicker('⚠️ 경고: 심해 프라울러의 선체 공격! 내구도 손상!', 'alert');
+                this.showTicker(this.t('tProwlerAttack'), 'alert');
               }
             } else {
               c.aggro = false;
@@ -2185,11 +2448,10 @@
           }
         });
 
-        // 2. Apex Hadal Leviathan AI
+        // Hadal Leviathan
         const lev = this.leviathan;
         const distLev = Math.hypot(this.sub.x - lev.x, this.sub.y - lev.y);
 
-        // Leviathan Hunts by Hearing / Noise and Sonar
         if (!this.sub.silentMode && (this.sub.noise > 40 && distLev < 750)) {
           lev.aggro = true;
           lev.aggroTimer = 8.0;
@@ -2203,7 +2465,7 @@
             lev.roarCooldown = 6.0;
             this.sound.playLeviathanRoar();
             this.camera.shake = 12;
-            this.showTicker('🚨 거대 레비아탄 [스킬라]가 잠수정의 음향을 감지하고 돌진합니다!', 'alert');
+            this.showTicker(this.t('tLevRoar'), 'alert');
           }
 
           const chaseAngle = Math.atan2(this.sub.y - lev.y, this.sub.x - lev.x);
@@ -2218,7 +2480,7 @@
             lev.aggroTimer = 3.0;
             this.sub.vx += Math.cos(chaseAngle) * 9;
             this.sub.vy += Math.sin(chaseAngle) * 9;
-            this.showTicker('🚨 치명적 타격: 레비아탄의 파쇄성 물어뜯기! 선체 대파 위기!', 'alert');
+            this.showTicker(this.t('tLevBite'), 'alert');
           }
         } else {
           lev.vx = Math.sin(this.stats.playTimeSec * 0.2) * 1.8;
@@ -2245,7 +2507,6 @@
         const y = this.sub.y;
         const totalHeight = WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS;
 
-        // Sea floor collision
         if (y >= totalHeight - 40) {
           this.sub.y = totalHeight - 40;
           if (this.sub.vy > 1.5) {
@@ -2256,13 +2517,11 @@
           this.sub.vy = 0;
         }
 
-        // Ocean surface collision
         if (y <= 15) {
           this.sub.y = 15;
           this.sub.vy = Math.max(0, this.sub.vy);
         }
 
-        // Matching terrain segment
         const dy = totalHeight / (this.terrain.length - 1);
         const idx = Math.floor(y / dy);
         if (idx >= 0 && idx < this.terrain.length - 1) {
@@ -2272,26 +2531,24 @@
           const leftBound = segA.leftX + (segB.leftX - segA.leftX) * t;
           const rightBound = segA.rightX + (segB.rightX - segA.rightX) * t;
 
-          // Left Wall collision
           if (this.sub.x - this.sub.radius < leftBound) {
             this.sub.x = leftBound + this.sub.radius;
             if (Math.abs(this.sub.vx) > 2.0) {
               this.sub.hull = Math.max(0, this.sub.hull - Math.abs(this.sub.vx) * 3);
               this.sound.playImpact();
               this.camera.shake = 7;
-              this.showTicker('선체 암초 충돌! 조타에 주의하십시오.', 'alert');
+              this.showTicker(this.t('tTerrainCrash'), 'alert');
             }
             this.sub.vx = Math.abs(this.sub.vx) * 0.4;
           }
 
-          // Right Wall collision
           if (this.sub.x + this.sub.radius > rightBound) {
             this.sub.x = rightBound - this.sub.radius;
             if (Math.abs(this.sub.vx) > 2.0) {
               this.sub.hull = Math.max(0, this.sub.hull - Math.abs(this.sub.vx) * 3);
               this.sound.playImpact();
               this.camera.shake = 7;
-              this.showTicker('선체 암초 충돌! 조타에 주의하십시오.', 'alert');
+              this.showTicker(this.t('tTerrainCrash'), 'alert');
             }
             this.sub.vx = -Math.abs(this.sub.vx) * 0.4;
           }
@@ -2306,11 +2563,10 @@
             if (dist < 80 && !this.relicKeys[r.id]) {
               this.relicKeys[r.id] = true;
               this.sound.playOreCollected();
-              this.showTicker(`⭐ 외계 유물 확보! [선구자 암호 키 #${r.id} (${r.glyph})] 회수 성공!`, 'discovery');
+              this.showTicker(this.t('tRelicFound', { id: r.id, glyph: r.glyph }), 'discovery');
               this.saveData();
             }
           } else {
-            // Core activation check
             const dist = Math.hypot(this.sub.x - r.x, this.sub.y - r.y);
             if (dist < 100 && !this.coreActivated) {
               const keysCount = Object.values(this.relicKeys).filter(Boolean).length;
@@ -2337,14 +2593,12 @@
       }
 
       openDocking() {
-        // Auto Refill
         this.sub.hull = this.sub.maxHull;
         this.sub.oxygen = this.sub.maxOxygen;
         this.sub.battery = this.sub.maxBattery;
         this.sub.vx = 0;
         this.sub.vy = 0;
 
-        // Auto Sell minerals in cargo
         let gainedCredits = 0;
         if (this.cargo.length > 0) {
           this.lastSoldHistory = [...this.cargo];
@@ -2352,11 +2606,12 @@
           this.credits += gainedCredits;
           this.cargo = [];
           this.sound.playOreCollected();
-          this.showTicker(`자원 정산 완료: +${gainedCredits} CR 획득!`, 'discovery');
+          this.showTicker(this.t('tSettlement', { val: gainedCredits }), 'discovery');
         }
 
         this.saveData();
         this.renderUpgradeUI();
+        this.renderCargoTab();
         this.activeModal = 'dock';
         document.getElementById('dock-modal').style.display = 'flex';
         document.getElementById('dock-credits').textContent = `${this.credits} CR`;
@@ -2365,7 +2620,7 @@
       closeDocking() {
         this.activeModal = null;
         document.getElementById('dock-modal').style.display = 'none';
-        this.showTicker('모선 출항 완료. 잠항을 재개합니다.', 'ticker');
+        this.showTicker(this.t('tUndock'), 'ticker');
       }
 
       switchTab(tabId, btn) {
@@ -2377,8 +2632,12 @@
 
         if (tabId === 'mission') {
           const count = Object.values(this.relicKeys).filter(Boolean).length;
-          document.getElementById('mission-progress-box').textContent =
-            `현재 회수한 선구자 암호 키: ${count} / 3 개 ${count === 3 ? '-> 1,500m 해구 바닥의 주 송신기 코어를 가동하십시오!' : ''}`;
+          const progBox = document.getElementById('mission-progress-box');
+          if (progBox) {
+            progBox.textContent = this.lang === 'ko'
+              ? `현재 회수한 선구자 암호 키: ${count} / 3 개 ${count === 3 ? '-> 1,500m 해구 바닥의 주 송신기 코어를 가동하십시오!' : ''}`
+              : `Recovered Precursor Cipher Keys: ${count} / 3 ${count === 3 ? '-> Descend to 1,500m to activate the Singularity Relay!' : ''}`;
+          }
         } else if (tabId === 'cargo') {
           this.renderCargoTab();
         }
@@ -2386,29 +2645,32 @@
 
       renderCargoTab() {
         const panel = document.getElementById('cargo-sell-panel');
+        if (!panel) return;
+
+        const isKo = this.lang === 'ko';
         panel.innerHTML = `
           <div style="background: rgba(0, 30, 50, 0.6); padding: 12px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.2);">
-            <div style="font-weight: bold; color: var(--hud-cyan); margin-bottom: 6px;">[자원 거래소 시장 시세]</div>
-            <div style="font-size: 11px; color: #88c0d0; margin-bottom: 12px;">모선 도킹 시 수납된 모든 광물은 연합 공정 단가에 맞춰 즉시 자동 환전됩니다.</div>
+            <div style="font-weight: bold; color: var(--hud-cyan); margin-bottom: 6px;">${this.t('marketRateTitle')}</div>
+            <div style="font-size: 11px; color: #88c0d0; margin-bottom: 12px;">${this.t('marketRateSub')}</div>
             <table class="market-table">
               <thead>
                 <tr>
-                  <th>자원 명칭</th>
-                  <th>주요 서식/매장 수심</th>
-                  <th>단위 가치</th>
+                  <th>${this.t('thOreName')}</th>
+                  <th>${this.t('thOreDepth')}</th>
+                  <th>${this.t('thOreVal')}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>티타늄 (Titanium)</td><td>0m ~ 500m 얕은 암초</td><td style="color:#ffd700;">60 CR</td></tr>
-                <tr><td>구리 (Copper)</td><td>120m ~ 850m 황혼 동굴</td><td style="color:#ffd700;">120 CR</td></tr>
-                <tr><td>석영 결정 (Quartz)</td><td>250m ~ 1,100m 암초 벽</td><td style="color:#ffd700;">200 CR</td></tr>
-                <tr><td>리튬 (Lithium)</td><td>500m ~ 1,400m 점해수대</td><td style="color:#ffd700;">380 CR</td></tr>
-                <tr><td>다크매터 결정 (Dark Crystal)</td><td>900m ~ 1,600m 초심해저</td><td style="color:#ffd700;">750 CR</td></tr>
+                <tr><td>${isKo ? '티타늄 (Titanium)' : 'Titanium'}</td><td>0m ~ 500m</td><td style="color:#ffd700;">60 CR</td></tr>
+                <tr><td>${isKo ? '구리 (Copper)' : 'Copper'}</td><td>120m ~ 850m</td><td style="color:#ffd700;">120 CR</td></tr>
+                <tr><td>${isKo ? '석영 결정 (Quartz)' : 'Quartz Crystal'}</td><td>250m ~ 1,100m</td><td style="color:#ffd700;">200 CR</td></tr>
+                <tr><td>${isKo ? '리튬 (Lithium)' : 'Lithium'}</td><td>500m ~ 1,400m</td><td style="color:#ffd700;">380 CR</td></tr>
+                <tr><td>${isKo ? '다크매터 결정 (Dark Crystal)' : 'Dark Matter Crystal'}</td><td>900m ~ 1,600m</td><td style="color:#ffd700;">750 CR</td></tr>
               </tbody>
             </table>
           </div>
           <div style="background: rgba(0, 25, 45, 0.5); padding: 12px; border-radius: 4px; font-size: 11px; color: #9feaff;">
-            최근 입항 정산 내역: ${this.lastSoldHistory.length > 0 ? `${this.lastSoldHistory.length}개 자원 환전 완료` : '최근 채굴 내역 없음'}
+            ${this.lastSoldHistory.length > 0 ? this.t('recentSales', { count: this.lastSoldHistory.length }) : this.t('noRecentSales')}
           </div>
         `;
       }
@@ -2416,7 +2678,10 @@
       // --- UPGRADES PURCHASE ---
       renderUpgradeUI() {
         const container = document.getElementById('upgrade-list');
+        if (!container) return;
         container.innerHTML = '';
+
+        const isKo = this.lang === 'ko';
 
         UPGRADE_DATA.forEach(upg => {
           const currentLvl = this.upgrades[upg.id];
@@ -2430,29 +2695,33 @@
           if (upg.id === 'emp' || upg.id === 'nanite') {
             isMax = (currentLvl >= 1);
             cost = upg.tiers[0].cost;
-            tierLabel = isMax ? '장착 완료' : '미장착';
+            tierLabel = isMax ? (isKo ? '장착 완료' : 'Installed') : (isKo ? '미장착' : 'Not Installed');
           } else {
             isMax = (currentLvl >= upg.tiers.length);
             if (!isMax) {
               cost = upg.tiers[currentLvl].cost;
-              tierLabel = `현재: Lv.${currentLvl} (${upg.tiers[currentLvl - 1].label})`;
+              const curLabel = isKo ? upg.tiers[currentLvl - 1].labelKo : upg.tiers[currentLvl - 1].labelEn;
+              tierLabel = `Lv.${currentLvl} (${curLabel})`;
             } else {
               tierLabel = `Lv.${currentLvl} (MAX)`;
             }
           }
 
+          const upgName = isKo ? upg.nameKo : upg.nameEn;
+          const upgDesc = isKo ? upg.descKo : upg.descEn;
+
           card.innerHTML = `
             <div class="upgrade-info">
               <h4>
-                <span>${upg.name}</span>
+                <span>${upgName}</span>
                 <span class="upgrade-level">${tierLabel}</span>
               </h4>
-              <div class="upgrade-desc">${upg.desc}</div>
+              <div class="upgrade-desc">${upgDesc}</div>
             </div>
             <div class="upgrade-foot">
-              <span class="upgrade-cost">${isMax ? '최고 티어' : `${cost} CR`}</span>
+              <span class="upgrade-cost">${isMax ? this.t('maxTier') : `${cost} CR`}</span>
               <button class="btn-buy" ${isMax || this.credits < cost ? 'disabled' : ''} onclick="game.buyUpgrade('${upg.id}', ${cost})">
-                ${isMax ? '완료' : '개조 장착'}
+                ${isMax ? this.t('btnPurchased') : this.t('btnBuy')}
               </button>
             </div>
           `;
@@ -2468,7 +2737,7 @@
         this.upgrades[upgId]++;
 
         this.sound.playOreCollected();
-        this.showTicker(`업그레이드 완료: ${upgId.toUpperCase()} 강화 성공!`, 'discovery');
+        this.showTicker(this.t('tUpgradeSuccess', { upg: upgId.toUpperCase() }), 'discovery');
         this.saveData();
         this.renderUpgradeUI();
       }
@@ -2482,7 +2751,7 @@
       openCodex() {
         this.activeModal = 'codex';
         document.getElementById('codex-modal').style.display = 'flex';
-        this.switchCodexTab('fauna', document.querySelector('#codex-modal .tab-btn'));
+        this.switchCodexTab('fauna', document.getElementById('tab-codex-fauna'));
       }
 
       closeCodex() {
@@ -2496,19 +2765,40 @@
 
         const content = document.getElementById('codex-content');
         content.innerHTML = '';
+        const isKo = this.lang === 'ko';
 
         if (cat === 'fauna') {
           const faunaEntries = [
-            { name: '발광 해파리 (Aura Medusa)', depth: '80m ~ 1,200m', desc: '평화로운 심해 플랑크톤 섭식 생물. 선체에 무해하며 주변을 은은하게 비춥니다.' },
-            { name: '유령 가오리 (Phantom Ray)', depth: '200m ~ 850m', desc: '거대한 날개를 펄럭이며 심해 조류를 타는 온순한 대형 연골어류.' },
-            { name: '심해 프라울러 (Abyss Prowler)', depth: '400m ~ 1,100m', desc: '위협적 육식 포식자. 잠수정 조명이나 엔진 소음에 반응하여 고속으로 돌진합니다.' },
-            { name: '하달 레비아탄 [스킬라] (The Hadal Leviathan)', depth: '950m ~ 1,600m 최심부', desc: '초심해의 절대 군주. 시각은 퇴화되었으나 극도로 예민한 청각을 지녔습니다. 소나 핑이나 급가속 소음에 즉각 반응합니다. 조명을 끄고 정숙 주행하십시오.' }
+            {
+              name: isKo ? '발광 해파리 (Aura Medusa)' : 'Aura Medusa (Bioluminescent Jellyfish)',
+              depth: '80m ~ 1,200m',
+              desc: isKo ? '평화로운 심해 플랑크톤 섭식 생물. 선체에 무해하며 주변을 은은하게 비춥니다.'
+                         : 'Peaceful bioluminescent plankton-feeder. Harmless to sub hulls and gently illuminates surrounding waters.'
+            },
+            {
+              name: isKo ? '유령 가오리 (Phantom Ray)' : 'Phantom Ray',
+              depth: '200m ~ 850m',
+              desc: isKo ? '거대한 날개를 펄럭이며 심해 조류를 타는 온순한 대형 연골어류.'
+                         : 'Large, docile cartilaginous ocean ray that drifts gracefully with deep water currents.'
+            },
+            {
+              name: isKo ? '심해 프라울러 (Abyss Prowler)' : 'Abyss Prowler',
+              depth: '400m ~ 1,100m',
+              desc: isKo ? '위협적 육식 포식자. 잠수정 조명이나 엔진 소음에 반응하여 고속으로 돌진합니다.'
+                         : 'Aggressive predatory carnivore. Senses submersible headlights and high thruster noise, charging at high velocity.'
+            },
+            {
+              name: isKo ? '하달 레비아탄 [스킬라] (The Hadal Leviathan)' : 'The Hadal Leviathan [Scylla]',
+              depth: '950m ~ 1,600m',
+              desc: isKo ? '초심해의 절대 군주. 시각은 퇴화되었으나 극도로 예민한 청각을 지녔습니다. 소나 핑이나 급가속 소음에 즉각 반응합니다. 조명을 끄고 정숙 주행하십시오.'
+                         : 'Apex predator of the abyssal trench. Completely blind, relying solely on echolocation and acoustic hearing. Reacts violently to sonar pings and thruster noise. Kill lights and run silent.'
+            }
           ];
           faunaEntries.forEach(f => {
             const item = document.createElement('div');
             item.className = 'codex-item discovered';
             item.innerHTML = `
-              <div style="font-weight:bold; color:var(--hud-cyan);">${f.name} <span style="font-size:11px; color:#88c0d0;">[서식 수심: ${f.depth}]</span></div>
+              <div style="font-weight:bold; color:var(--hud-cyan);">${f.name} <span style="font-size:11px; color:#88c0d0;">[${f.depth}]</span></div>
               <div style="font-size:11px; color:#c0d8e8; margin-top:4px;">${f.desc}</div>
             `;
             content.appendChild(item);
@@ -2517,10 +2807,11 @@
           Object.values(MINERAL_TYPES).forEach(m => {
             const item = document.createElement('div');
             item.className = 'codex-item discovered';
+            const mName = isKo ? m.nameKo : m.nameEn;
             item.innerHTML = `
-              <div style="font-weight:bold; color:${m.glow};">${m.name} <span style="color:#ffd700;">[환전 가치: ${m.val} CR]</span></div>
+              <div style="font-weight:bold; color:${m.glow};">${mName} <span style="color:#ffd700;">[${m.val} CR]</span></div>
               <div style="font-size:11px; color:#c0d8e8; margin-top:4px;">
-                채굴 레이저(마우스 좌클릭)로 광맥을 파쇄하여 채취합니다.
+                ${isKo ? '채굴 레이저(마우스 좌클릭)로 광맥을 파쇄하여 수납합니다.' : 'Fracture ore nodes with the mining laser (Left-Click) to collect.'}
               </div>
             `;
             content.appendChild(item);
@@ -2530,10 +2821,13 @@
             const isFound = (r.id === 'CORE' ? this.coreActivated : this.relicKeys[r.id]);
             const item = document.createElement('div');
             item.className = `codex-item ${isFound ? 'discovered' : 'undiscovered'}`;
+            const rName = isKo ? r.nameKo : r.nameEn;
             item.innerHTML = `
-              <div style="font-weight:bold; color:${isFound ? '#ffd700' : '#777'};">${r.name} [수심 ${r.depth}m]</div>
+              <div style="font-weight:bold; color:${isFound ? '#ffd700' : '#777'};">${rName} [${r.depth}m]</div>
               <div style="font-size:11px; margin-top:4px;">
-                ${isFound ? '신호 분석 완료: 선구자의 양자 암호 데이터가 해독되었습니다.' : '미발견: 해당 수심대로 잠항하여 유물을 탐색하십시오.'}
+                ${isFound
+                  ? (isKo ? '신호 분석 완료: 선구자의 양자 암호 데이터가 해독되었습니다.' : 'Signal Analyzed: Precursor quantum cipher decrypted.')
+                  : (isKo ? '미발견: 해당 수심대로 잠항하여 유물을 탐색하십시오.' : 'Undiscovered: Dive to the designated depth to search for relics.')}
               </div>
             `;
             content.appendChild(item);
@@ -2547,17 +2841,17 @@
         document.getElementById('victory-modal').style.display = 'flex';
         const statsEl = document.getElementById('victory-stats');
         statsEl.innerHTML = `
-          • 총 생존 잠항 시간: ${Math.floor(this.stats.playTimeSec / 60)}분 ${(this.stats.playTimeSec % 60).toFixed(0)}초<br>
-          • 최고 심해 잠항 기록: ${this.stats.maxDepthReached.toFixed(1)} m<br>
-          • 채굴한 총 광물 수: ${this.stats.mineralsMined} 개<br>
-          • 획득 크레딧: ${this.credits} CR
+          ${this.t('statTime', { min: Math.floor(this.stats.playTimeSec / 60), sec: (this.stats.playTimeSec % 60).toFixed(0) })}<br>
+          ${this.t('statDepth', { depth: this.stats.maxDepthReached.toFixed(1) })}<br>
+          ${this.t('statMined', { mined: this.stats.mineralsMined })}<br>
+          ${this.t('statCredits', { credits: this.credits })}
         `;
       }
 
       continueFreeplay() {
         this.activeModal = null;
         document.getElementById('victory-modal').style.display = 'none';
-        this.showTicker('선구자 코어 활성화 완료! 자유 탐사 모드로 전환합니다.', 'discovery');
+        this.showTicker(this.t('tVictoryRelay'), 'discovery');
       }
 
       triggerGameOver(reason) {
@@ -2571,7 +2865,6 @@
         this.isGameOver = false;
         document.getElementById('gameover-modal').style.display = 'none';
 
-        // Reset to mothership
         this.sub.x = WORLD.MOTHERSHIP_X;
         this.sub.y = WORLD.MOTHERSHIP_Y + 40;
         this.sub.vx = 0;
@@ -2579,9 +2872,9 @@
         this.sub.hull = this.sub.maxHull;
         this.sub.oxygen = this.sub.maxOxygen;
         this.sub.battery = this.sub.maxBattery;
-        this.cargo = []; // lose cargo on death
+        this.cargo = [];
 
-        this.showTicker('모선 베이스에서 잠수정을 수리하여 재출항했습니다.', 'ticker');
+        this.showTicker(this.t('tRespawnMsg'), 'ticker');
       }
 
       // --- PARTICLES & BUBBLES ---
@@ -2681,18 +2974,16 @@
         const depthLimitEl = document.getElementById('depth-rating');
 
         if (depthM > safeLimit) {
-          depthLimitEl.textContent = `⚠️ DANGER! CRUSH LIMIT: ${safeLimit} m EXCEEDED`;
+          depthLimitEl.textContent = this.t('dangerCrush', { depth: safeLimit });
           depthLimitEl.className = 'depth-limit danger';
         } else {
-          depthLimitEl.textContent = `SAFE CRUSH LIMIT: ${safeLimit} m`;
+          depthLimitEl.textContent = this.t('safeCrush', { depth: safeLimit });
           depthLimitEl.className = 'depth-limit';
         }
 
-        // Speed readout
         const kn = (Math.hypot(this.sub.vx, this.sub.vy) * 2.5).toFixed(1);
         document.getElementById('speed-indicator').textContent = `${kn} kn`;
 
-        // Gauges
         document.getElementById('gauge-hull').style.width = `${Math.max(0, this.sub.hull)}%`;
         document.getElementById('val-hull').textContent = `${Math.ceil(this.sub.hull)}%`;
 
@@ -2705,38 +2996,42 @@
         document.getElementById('gauge-noise').style.width = `${Math.min(100, this.sub.noise)}%`;
         document.getElementById('val-noise').textContent = `${Math.round(this.sub.noise)} dB`;
 
-        // Cargo & Credits
         const cargoCap = UPGRADE_DATA[6].tiers[this.upgrades.cargo - 1].cap;
-        document.getElementById('cargo-readout').textContent = `${this.cargo.length} / ${cargoCap} 단위`;
+        document.getElementById('cargo-readout').textContent = `${this.cargo.length} / ${cargoCap} ${this.t('units')}`;
         document.getElementById('credits-readout').textContent = `${this.credits} CR`;
 
-        // Relics
         const collectedCount = Object.values(this.relicKeys).filter(Boolean).length;
-        document.getElementById('relic-status').textContent = `고대 유물 키: ${collectedCount} / 3 회수`;
+        document.getElementById('relic-status').textContent = this.t('relicKeyStatus', { count: collectedCount });
 
         // Biome name
         const biomeEl = document.getElementById('biome-name');
-        if (depthM < 150) biomeEl.textContent = '표해수대 (0m ~ 150m: 모선 해역)';
-        else if (depthM < 450) biomeEl.textContent = '중심해대 (150m ~ 450m: 황혼의 해초 동굴)';
-        else if (depthM < 900) biomeEl.textContent = '점해수대 (450m ~ 900m: 암흑 해구)';
-        else if (depthM < 1300) biomeEl.textContent = '심해저대 (900m ~ 1,300m: 레비아탄 공허)';
-        else biomeEl.textContent = '초심해 하달 해구 (1,300m ~ 1,600m: 선구자 신전)';
+        if (depthM < 150) biomeEl.textContent = this.t('biome1');
+        else if (depthM < 450) biomeEl.textContent = this.t('biome2');
+        else if (depthM < 900) biomeEl.textContent = this.t('biome3');
+        else if (depthM < 1300) biomeEl.textContent = this.t('biome4');
+        else biomeEl.textContent = this.t('biome5');
 
         // Beacon Tracker
         const trackerEl = document.getElementById('beacon-tracker');
+        const isKo = this.lang === 'ko';
         if (collectedCount < 3) {
           const nextTarget = this.ruins.find(r => r.id !== 'CORE' && !this.relicKeys[r.id]);
           if (nextTarget) {
             const dy = (nextTarget.y - this.sub.y) / WORLD.METERS_TO_PIXELS;
-            trackerEl.textContent = `신호 [${nextTarget.glyph}]: 수심 ${nextTarget.depth}m (${dy > 0 ? `하방 ${dy.toFixed(0)}m` : `상방 ${Math.abs(dy).toFixed(0)}m`})`;
+            const dirStr = dy > 0
+              ? (isKo ? `하방 ${dy.toFixed(0)}m` : `DOWN ${dy.toFixed(0)}m`)
+              : (isKo ? `상방 ${Math.abs(dy).toFixed(0)}m` : `UP ${Math.abs(dy).toFixed(0)}m`);
+            trackerEl.textContent = this.t('beaconTarget', { glyph: nextTarget.glyph, depth: nextTarget.depth, dir: dirStr });
           }
         } else {
           const core = this.ruins.find(r => r.id === 'CORE');
           const dy = (core.y - this.sub.y) / WORLD.METERS_TO_PIXELS;
-          trackerEl.textContent = `주 송신기 코어: 수심 1,500m (${dy > 0 ? `하방 ${dy.toFixed(0)}m` : '도달 완료'})`;
+          const dirStr = dy > 0
+            ? (isKo ? `하방 ${dy.toFixed(0)}m` : `DOWN ${dy.toFixed(0)}m`)
+            : (isKo ? '도달 완료' : 'ARRIVED');
+          trackerEl.textContent = this.t('beaconCore', { dir: dirStr });
         }
 
-        // Damage Screen Overlay
         const dmgOverlay = document.getElementById('damage-overlay');
         if (this.sub.hull < 35) {
           dmgOverlay.style.opacity = (1 - this.sub.hull / 35) * 0.8;
@@ -2752,48 +3047,26 @@
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
 
-        // 1. World Camera Transform
         ctx.save();
         ctx.translate(this.width / 2 - this.camera.x, this.height / 2 - this.camera.y);
 
-        // Ambient Water Color based on depth
         this.renderWaterBackground(ctx);
-
-        // Hydrothermal Vents
         this.renderVents(ctx);
-
-        // Terrain Caverns
         this.renderTerrain(ctx);
-
-        // Mineral Nodes
         this.renderMinerals(ctx);
-
-        // Alien Ruins
         this.renderRuins(ctx);
-
-        // Mothership Base
         this.renderMothership(ctx);
-
-        // Creatures & Leviathan
         this.renderCreatures(ctx);
-
-        // Particles & Bubbles
         this.renderParticles(ctx);
-
-        // Mining Laser Beam / Claw
         this.renderLaserBeam(ctx);
-
-        // Submarine Nautilus-IV
         this.renderSubmarine(ctx);
 
-        // Active Sonar Ping Wave & Wireframes
         if (this.sonar.active || this.sonar.timer > 0) {
           this.renderSonar(ctx);
         }
 
         ctx.restore();
 
-        // 2. Dynamic Darkness Mask & Headlight Cone of Light
         this.renderDarknessMask();
       }
 
@@ -2808,13 +3081,12 @@
         } else if (depthM < 900) {
           color = '#010b18';
         } else {
-          color = '#01040a'; // Abyssal pitch black
+          color = '#01040a';
         }
 
         ctx.fillStyle = color;
         ctx.fillRect(this.camera.x - this.width / 2 - 100, this.camera.y - this.height / 2 - 100, this.width + 200, this.height + 200);
 
-        // Surface god rays if near top
         if (this.camera.y < 350) {
           ctx.save();
           ctx.fillStyle = 'rgba(0, 200, 255, 0.08)';
@@ -2836,7 +3108,6 @@
         ctx.strokeStyle = '#00f0ff';
         ctx.lineWidth = 2;
 
-        // Draw Left Wall Polygon
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(this.terrain[0].leftX, this.terrain[0].y);
@@ -2847,7 +3118,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Draw Right Wall Polygon
         ctx.beginPath();
         ctx.moveTo(WORLD.WIDTH, 0);
         ctx.lineTo(this.terrain[0].rightX, this.terrain[0].y);
@@ -2858,9 +3128,7 @@
         ctx.closePath();
         ctx.fill();
 
-        // Trench Floor
         ctx.fillRect(0, WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS - 35, WORLD.WIDTH, 120);
-
         ctx.restore();
       }
 
@@ -2911,7 +3179,6 @@
           }
         });
 
-        // Floating loose minerals
         this.floatingMinerals.forEach(m => {
           ctx.fillStyle = m.type.color;
           ctx.shadowColor = m.type.glow;
@@ -2932,18 +3199,15 @@
           ctx.lineWidth = 3;
 
           if (r.id === 'CORE') {
-            // Massive ancient relay monolith
             ctx.strokeRect(r.x - 70, r.y - 120, 140, 120);
             ctx.fillStyle = this.coreActivated ? 'rgba(16, 255, 153, 0.3)' : 'rgba(0, 240, 255, 0.08)';
             ctx.fillRect(r.x - 70, r.y - 120, 140, 120);
 
-            // Pulsing core light
             ctx.fillStyle = r.color;
             ctx.beginPath();
             ctx.arc(r.x, r.y - 60, 22 + Math.sin(this.stats.playTimeSec * 3) * 4, 0, Math.PI * 2);
             ctx.fill();
           } else {
-            // Ancient Alien Obelisk
             ctx.beginPath();
             ctx.moveTo(r.x, r.y - 65);
             ctx.lineTo(r.x - 28, r.y);
@@ -2951,7 +3215,6 @@
             ctx.closePath();
             ctx.stroke();
 
-            // Floating Cipher Key inside
             if (!this.relicKeys[r.id]) {
               ctx.fillStyle = '#ffd700';
               ctx.beginPath();
@@ -2968,7 +3231,6 @@
         const mx = WORLD.MOTHERSHIP_X;
         const my = WORLD.MOTHERSHIP_Y;
 
-        // Giant Research Vessel Hull
         ctx.fillStyle = '#081f38';
         ctx.strokeStyle = '#00f0ff';
         ctx.lineWidth = 2;
@@ -2978,7 +3240,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Docking Cradle / Bay
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 3;
         ctx.setLineDash([8, 6]);
@@ -2987,21 +3248,19 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Label
         ctx.fillStyle = '#9feaff';
         ctx.font = 'bold 13px Consolas';
         ctx.textAlign = 'center';
-        ctx.fillText('CSS ORCA // RESEARCH MOTHERSHIP', mx, my - 15);
+        ctx.fillText(this.t('mothershipLabel'), mx, my - 15);
         ctx.fillStyle = '#ffd700';
         ctx.font = '11px Consolas';
-        ctx.fillText('DOCKING CRADLE [E]', mx, my + 45);
+        ctx.fillText(this.t('dockingLabel'), mx, my + 45);
 
         ctx.restore();
       }
 
       renderCreatures(ctx) {
         ctx.save();
-        // Fauna
         this.creatures.forEach(c => {
           if (c.type === 'jellyfish') {
             ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
@@ -3013,7 +3272,6 @@
             ctx.fill();
             ctx.stroke();
 
-            // Tentacles
             for (let t = -2; t <= 2; t++) {
               ctx.beginPath();
               ctx.moveTo(c.x + t * 4, c.y);
@@ -3036,7 +3294,6 @@
             ctx.fill();
             ctx.stroke();
 
-            // Glowing Predator Eyes
             ctx.fillStyle = '#ffff00';
             ctx.beginPath();
             ctx.arc(c.x + 6, c.y - 4, 3, 0, Math.PI * 2);
@@ -3059,7 +3316,6 @@
           ctx.stroke();
         }
 
-        // Leviathan Head & Jaws
         ctx.fillStyle = lev.aggro ? '#ff0033' : '#3d0814';
         ctx.strokeStyle = '#ff3355';
         ctx.lineWidth = 3;
@@ -3068,7 +3324,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Sensory Horns
         ctx.strokeStyle = '#00ffff';
         ctx.beginPath();
         ctx.moveTo(lev.x, lev.y);
@@ -3085,25 +3340,21 @@
         ctx.translate(this.sub.x, this.sub.y);
         ctx.rotate(this.sub.angle);
 
-        // Submarine Hull (Nautilus-IV)
         ctx.fillStyle = '#0b233a';
         ctx.strokeStyle = '#00f0ff';
         ctx.lineWidth = 2.5;
 
-        // Main Oblong Sub Capsule
         ctx.beginPath();
         ctx.ellipse(0, 0, this.sub.radius * 1.5, this.sub.radius, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Observation Cockpit
         ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
         ctx.beginPath();
         ctx.arc(14, 0, 9, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Rear Thruster Nozzle
         ctx.fillStyle = '#051422';
         ctx.fillRect(-this.sub.radius * 1.5 - 6, -6, 8, 12);
 
@@ -3114,7 +3365,6 @@
         if (!this.laser.active) return;
         ctx.save();
 
-        // Articulated robotic claw turret aiming at target
         const armLength = 16;
         const armX = this.sub.x + Math.cos(this.sub.turretAngle) * armLength;
         const armY = this.sub.y + Math.sin(this.sub.turretAngle) * armLength;
@@ -3126,7 +3376,6 @@
         ctx.lineTo(armX, armY);
         ctx.stroke();
 
-        // High-voltage plasma beam with electric jitter
         ctx.strokeStyle = '#00f0ff';
         ctx.shadowColor = '#00f0ff';
         ctx.shadowBlur = 14;
@@ -3140,7 +3389,6 @@
         ctx.lineTo(this.laser.endX, this.laser.endY);
         ctx.stroke();
 
-        // Core white beam
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
@@ -3148,7 +3396,6 @@
         ctx.lineTo(this.laser.endX, this.laser.endY);
         ctx.stroke();
 
-        // Tip spark
         ctx.fillStyle = '#fff';
         ctx.shadowBlur = 12;
         ctx.beginPath();
@@ -3160,19 +3407,16 @@
 
       renderSonar(ctx) {
         ctx.save();
-        // Expanding circular sonar shockwave
         ctx.strokeStyle = 'rgba(16, 255, 153, 0.6)';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(this.sub.x, this.sub.y, this.sonar.radius, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Retro Radar Green Wireframe highlight on terrain and objects
         const alpha = Math.min(1.0, this.sonar.timer / 3.0);
         ctx.strokeStyle = `rgba(16, 255, 153, ${alpha})`;
         ctx.lineWidth = 1.5;
 
-        // Wireframe on terrain
         for (let i = 0; i < this.terrain.length - 1; i++) {
           const segA = this.terrain[i];
           const segB = this.terrain[i + 1];
@@ -3190,7 +3434,6 @@
           }
         }
 
-        // Blips on creatures
         this.creatures.forEach(c => {
           const d = Math.hypot(this.sub.x - c.x, this.sub.y - c.y);
           if (d < this.sonar.maxRadius) {
@@ -3201,7 +3444,6 @@
           }
         });
 
-        // Blip on Leviathan
         const dLev = Math.hypot(this.sub.x - this.leviathan.x, this.sub.y - this.leviathan.y);
         if (dLev < this.sonar.maxRadius) {
           ctx.fillStyle = `rgba(255, 0, 50, ${alpha})`;
@@ -3236,7 +3478,6 @@
       // --- DYNAMIC DARKNESS & HEADLIGHT CONE MASK ---
       renderDarknessMask() {
         const depthM = Math.max(0, this.sub.y / WORLD.METERS_TO_PIXELS);
-        // Darkness increases with depth: 0m = 15% dark, 350m+ = 97% black pitch
         const darkness = Math.min(0.97, Math.max(0.15, depthM / 350));
 
         const ctx = this.ctx;
@@ -3245,18 +3486,15 @@
 
         ctx.save();
 
-        // 1. Fill full dark shadow layer on offscreen buffer
         tCtx.globalCompositeOperation = 'source-over';
         tCtx.fillStyle = `rgba(1, 4, 10, ${darkness})`;
         tCtx.fillRect(0, 0, this.width, this.height);
 
-        // 2. Cut out light cones using 'destination-out'
         tCtx.globalCompositeOperation = 'destination-out';
 
         const screenSubX = this.width / 2 + (this.sub.x - this.camera.x);
         const screenSubY = this.height / 2 + (this.sub.y - this.camera.y);
 
-        // Subtle cockpit ambient glow
         const ambGrad = tCtx.createRadialGradient(screenSubX, screenSubY, 10, screenSubX, screenSubY, 85);
         ambGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
         ambGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
@@ -3265,7 +3503,6 @@
         tCtx.arc(screenSubX, screenSubY, 85, 0, Math.PI * 2);
         tCtx.fill();
 
-        // Headlight Cone of Light
         if (this.sub.lightsOn && this.sub.battery > 0) {
           const lightTier = UPGRADE_DATA[2].tiers[this.upgrades.lights - 1];
           const range = lightTier.range;
@@ -3285,7 +3522,6 @@
           tCtx.fill();
         }
 
-        // Draw shadow layer onto main canvas
         ctx.drawImage(this.darkCanvas, 0, 0);
         ctx.restore();
       }

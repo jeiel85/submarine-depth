@@ -2,6 +2,7 @@
 > **완성형 심해 잠수정 서바이벌 탐사 RPG (Standalone HTML5 Simulation)**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now-00f0ff?style=for-the-badge&logo=google-chrome&logoColor=white)](https://jeiel85.github.io/submarine-depth/)
+[![Language](https://img.shields.io/badge/Language-한국어%20%7C%20English-orange?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-HTML5%20%7C%20Canvas%202D%20%7C%20Web%20Audio%20API-blue?style=for-the-badge)](#)
 
@@ -68,6 +69,11 @@
 ### 7. 완결성 & 실시간 저장 (Persistence)
 - 3개의 선구자 암호 키를 수집하여 1,500m 해구 바닥의 주 송신기 코어를 가동하면 승리 엔딩 및 탐사 결산 리포트 제공 (자유 탐사 계속 가능).
 - 크레딧, 잠수정 업그레이드 레벨, 인양한 외계 암호 키, 해양 도감(Codex) 및 통계가 `localStorage`에 자동 실시간 동기화.
+
+### 8. 완벽한 다국어 지원 (한국어 / English i18n)
+- **한국어(기본 설정)** 및 **English** 실시간 원클릭 전환 지원 (`[🌐 한국어]` / `[🌐 English]` 버튼).
+- UI, HUD 게이지, 조작 안내, 모선 거래소, 업그레이드 트리, 해양 도감, 지령 텍스트, 경보 알림 티커까지 100% 매끄러운 이중 언어 현지화.
+- 선택한 언어는 `localStorage`에 자동 영구 저장.
 
 ---
 
