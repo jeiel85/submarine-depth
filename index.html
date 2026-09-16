@@ -1,0 +1,3301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ABYSSAL HORIZON: PROJECT HADAL | 심해 잠수정 서바이벌 RPG</title>
+  <style>
+    :root {
+      --bg-dark: #03080f;
+      --hud-cyan: #00f0ff;
+      --hud-green: #10ff99;
+      --hud-yellow: #ffb700;
+      --hud-red: #ff3344;
+      --hud-blue: #0077ff;
+      --hud-purple: #bb55ff;
+      --panel-bg: rgba(4, 14, 26, 0.90);
+      --panel-border: rgba(0, 240, 255, 0.35);
+      --font-mono: 'Consolas', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: #e0f8ff;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    canvas#gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Cockpit Scanline & CRT Effect */
+    .crt-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+                  radial-gradient(circle at center, transparent 65%, rgba(0, 10, 20, 0.85) 100%);
+      background-size: 100% 4px, 100% 100%;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.92);
+    }
+
+    /* Low Hull Damage Cracks Overlay */
+    #damage-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 11;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      background: radial-gradient(circle at center, transparent 40%, rgba(255, 20, 20, 0.4) 100%);
+    }
+
+    .alarm-flash {
+      animation: alarmPulse 1s infinite alternate;
+    }
+
+    @keyframes alarmPulse {
+      0% { opacity: 0.15; }
+      100% { opacity: 0.75; }
+    }
+
+    /* HUD Dashboard Layers */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px;
+    }
+
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .hud-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 10px 14px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.65), inset 0 0 10px rgba(0, 240, 255, 0.06);
+      pointer-events: auto;
+    }
+
+    .hud-title {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(0, 240, 255, 0.8);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Gauges */
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 220px;
+    }
+
+    .gauge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .gauge-label {
+      font-size: 11px;
+      width: 64px;
+      color: #9feaff;
+      font-weight: bold;
+    }
+
+    .gauge-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(0, 30, 50, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      width: 100%;
+      transition: width 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    .gauge-fill.hull { background: linear-gradient(90deg, #ff3344, #ffaa00, #10ff99); }
+    .gauge-fill.oxygen { background: linear-gradient(90deg, #0077ff, #00f0ff); }
+    .gauge-fill.battery { background: linear-gradient(90deg, #ff9900, #ffdd00); }
+    .gauge-fill.noise { background: linear-gradient(90deg, #10ff99, #ffbb00, #ff3344); }
+
+    .gauge-val {
+      font-size: 11px;
+      width: 44px;
+      text-align: right;
+      color: #e0f8ff;
+      font-weight: bold;
+    }
+
+    /* Depth & Compass HUD Center */
+    .hud-center-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .depth-display {
+      text-align: center;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 6px 22px;
+    }
+
+    .depth-number {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--hud-cyan);
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      letter-spacing: 2px;
+    }
+
+    .depth-limit {
+      font-size: 10px;
+      color: #7ba8be;
+      margin-top: 2px;
+    }
+
+    .depth-limit.danger {
+      color: var(--hud-red);
+      font-weight: bold;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .compass-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #88c0d0;
+      background: rgba(0, 15, 30, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+
+    .beacon-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    .beacon-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffd700;
+      box-shadow: 0 0 8px #ffd700;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.5; }
+    }
+
+    /* Top Right: Status & Cargo */
+    .hud-top-right {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .status-badges {
+      display: flex;
+      gap: 6px;
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0, 20, 35, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge.active {
+      border-color: var(--hud-cyan);
+      background: rgba(0, 240, 255, 0.2);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+    }
+
+    .badge.silent {
+      border-color: var(--hud-green);
+      background: rgba(16, 255, 153, 0.2);
+      color: var(--hud-green);
+      box-shadow: 0 0 8px rgba(16, 255, 153, 0.4);
+    }
+
+    .badge.warning {
+      border-color: var(--hud-red);
+      background: rgba(255, 51, 68, 0.25);
+      color: var(--hud-red);
+    }
+
+    /* Bottom HUD */
+    .hud-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+    }
+
+    .controls-reminder {
+      font-size: 10px;
+      line-height: 1.6;
+      color: rgba(160, 215, 240, 0.7);
+    }
+
+    .controls-reminder kbd {
+      background: rgba(0, 40, 70, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: var(--hud-cyan);
+      font-weight: bold;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    button.hud-btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      color: var(--hud-cyan);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.hud-btn:hover {
+      background: rgba(0, 240, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+      color: #fff;
+    }
+
+    button.hud-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Notification Ticker */
+    #ticker {
+      position: absolute;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      z-index: 25;
+    }
+
+    .ticker-msg {
+      background: rgba(0, 15, 30, 0.92);
+      border: 1px solid rgba(0, 240, 255, 0.5);
+      border-radius: 4px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: #b0f4ff;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+      animation: fadeInOut 4s forwards;
+    }
+
+    .ticker-msg.alert {
+      border-color: var(--hud-red);
+      color: var(--hud-red);
+      background: rgba(40, 5, 10, 0.95);
+      font-weight: bold;
+    }
+
+    .ticker-msg.discovery {
+      border-color: #ffd700;
+      color: #ffe875;
+      background: rgba(30, 25, 0, 0.92);
+      font-weight: bold;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-8px); }
+      10% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
+
+    /* Modals & Menus (Docking, Codex, Game Over, Victory) */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(2, 6, 12, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      background: #051220;
+      border: 2px solid var(--hud-cyan);
+      border-radius: 6px;
+      box-shadow: 0 0 35px rgba(0, 240, 255, 0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(0, 35, 60, 0.65);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--hud-cyan);
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: none;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      color: var(--hud-cyan);
+      font-size: 16px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: rgba(0, 240, 255, 0.3);
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Docking Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+      padding-bottom: 10px;
+    }
+
+    .tab-btn {
+      background: rgba(0, 20, 35, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: #9feaff;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 7px 16px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--hud-cyan);
+      color: #001525;
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+
+    /* Upgrade Grid */
+    .upgrade-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .upgrade-card {
+      background: rgba(2, 18, 32, 0.7);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 4px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .upgrade-card:hover {
+      border-color: var(--hud-cyan);
+    }
+
+    .upgrade-info h4 {
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .upgrade-level {
+      color: var(--hud-yellow);
+      font-size: 11px;
+    }
+
+    .upgrade-desc {
+      font-size: 11px;
+      color: #88c0d0;
+      line-height: 1.4;
+    }
+
+    .upgrade-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .upgrade-cost {
+      color: #ffd700;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .btn-buy {
+      background: rgba(0, 150, 180, 0.3);
+      border: 1px solid var(--hud-cyan);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .btn-buy:hover:not(:disabled) {
+      background: var(--hud-cyan);
+      color: #001525;
+      font-weight: bold;
+    }
+
+    .btn-buy:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: #557;
+    }
+
+    /* Start / Splash Screen */
+    #splash-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #07192d 0%, #02070e 80%, #000 100%);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .title-glitch {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #e0f8ff;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      letter-spacing: 3px;
+      color: var(--hud-cyan);
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .lore-intro {
+      max-width: 620px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #a0c8de;
+      margin-bottom: 30px;
+      background: rgba(0, 20, 35, 0.65);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+      padding: 16px 22px;
+      text-align: left;
+    }
+
+    .btn-launch {
+      background: linear-gradient(135deg, #0088aa, #00d4ff);
+      border: 1px solid #fff;
+      color: #020b14;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 14px 38px;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+      transition: all 0.3s;
+    }
+
+    .btn-launch:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.9);
+      background: #00f0ff;
+    }
+
+    /* Codex Grid */
+    .codex-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .codex-item {
+      background: rgba(3, 20, 34, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 4px;
+      padding: 12px;
+    }
+
+    .codex-item.discovered {
+      border-color: var(--hud-cyan);
+    }
+
+    .codex-item.undiscovered {
+      opacity: 0.5;
+      font-style: italic;
+    }
+
+    /* Market table in cargo tab */
+    .market-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .market-table th, .market-table td {
+      padding: 8px 12px;
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      text-align: left;
+    }
+
+    .market-table th {
+      background: rgba(0, 30, 50, 0.6);
+      color: var(--hud-cyan);
+    }
+
+    .market-table tr:hover {
+      background: rgba(0, 40, 70, 0.4);
+    }
+
+    /* Audio Mute Button */
+    .btn-audio {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="crt-overlay"></div>
+    <div id="damage-overlay"></div>
+
+    <!-- Live HUD -->
+    <div id="hud">
+      <!-- Top HUD -->
+      <div class="hud-top">
+        <!-- Gauges Box -->
+        <div class="hud-box gauge-container">
+          <div class="hud-title">
+            <span>잠수정 상태 // NAUTILUS-IV</span>
+            <span id="speed-indicator">0.0 kn</span>
+          </div>
+          <!-- Hull -->
+          <div class="gauge-row">
+            <span class="gauge-label">선체(HULL)</span>
+            <div class="gauge-track"><div id="gauge-hull" class="gauge-fill hull" style="width: 100%;"></div></div>
+            <span id="val-hull" class="gauge-val">100%</span>
+          </div>
+          <!-- Oxygen -->
+          <div class="gauge-row">
+            <span class="gauge-label">산소(O2)</span>
+            <div class="gauge-track"><div id="gauge-oxy" class="gauge-fill oxygen" style="width: 100%;"></div></div>
+            <span id="val-oxy" class="gauge-val">100%</span>
+          </div>
+          <!-- Battery -->
+          <div class="gauge-row">
+            <span class="gauge-label">전력(PWR)</span>
+            <div class="gauge-track"><div id="gauge-bat" class="gauge-fill battery" style="width: 100%;"></div></div>
+            <span id="val-bat" class="gauge-val">100%</span>
+          </div>
+          <!-- Noise (dB) -->
+          <div class="gauge-row">
+            <span class="gauge-label">음향(NOISE)</span>
+            <div class="gauge-track"><div id="gauge-noise" class="gauge-fill noise" style="width: 10%;"></div></div>
+            <span id="val-noise" class="gauge-val">12 dB</span>
+          </div>
+        </div>
+
+        <!-- Depth & Nav Center -->
+        <div class="hud-center-top">
+          <div class="depth-display">
+            <div style="font-size: 10px; color: #88c0d0; letter-spacing: 1px;">CURRENT DEPTH</div>
+            <div id="depth-readout" class="depth-number">0.0 m</div>
+            <div id="depth-rating" class="depth-limit">SAFE CRUSH LIMIT: 400 m</div>
+          </div>
+          <div class="compass-bar">
+            <div class="beacon-indicator">
+              <div class="beacon-dot"></div>
+              <span id="beacon-tracker">선구자 신호: 탐색 중...</span>
+            </div>
+            <span style="opacity: 0.4;">|</span>
+            <span id="biome-name">수면 기지 해역 (0m)</span>
+          </div>
+        </div>
+
+        <!-- Top Right: Inventory & Status -->
+        <div class="hud-top-right">
+          <div class="status-badges">
+            <div id="badge-lights" class="badge active">LIGHTS ON [Q]</div>
+            <div id="badge-silent" class="badge">NORMAL RUN</div>
+            <div id="badge-sonar" class="badge">SONAR READY [F]</div>
+          </div>
+          <div class="hud-box" style="min-width: 190px;">
+            <div class="hud-title">
+              <span>화물창 / 자금</span>
+              <span id="credits-readout" style="color: #ffd700; font-weight: bold;">0 CR</span>
+            </div>
+            <div style="font-size: 11px; color: #9feaff; display: flex; justify-content: space-between;">
+              <span>적재 용량:</span>
+              <span id="cargo-readout">0 / 15 단위</span>
+            </div>
+            <div style="font-size: 10px; color: #7ba8be; margin-top: 4px;" id="relic-status">
+              고대 유물 키: 0 / 3 회수
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Notification Ticker -->
+      <div id="ticker"></div>
+
+      <!-- Bottom HUD -->
+      <div class="hud-bottom">
+        <div class="hud-box controls-reminder">
+          <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 추진 기동 | <kbd>마우스 좌클릭</kbd> 채굴 레이저/로봇 암</div>
+          <div><kbd>Q</kbd> / <kbd>E</kbd> 헤드라이트 점등/소등 (정숙 주행) | <kbd>F</kbd> 액티브 소나 핑</div>
+          <div><kbd>SPACE</kbd> 충격파 EMP 펄스 (언락 시) | <kbd>C</kbd> 탐사 도감 | <kbd>M</kbd> 모선 귀환 신호</div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="btn-audio-toggle" class="hud-btn btn-audio" title="음향 토글">🔊</button>
+          <button id="btn-open-codex" class="hud-btn">📖 해양 도감 [C]</button>
+          <button id="btn-dock-manual" class="hud-btn" style="display: none; background: rgba(0, 240, 255, 0.35); color: #fff; font-weight: bold;">⚓ 모선 도킹 [E]</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mothership Base Docking Modal -->
+    <div id="dock-modal" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span>⚓ 모선 기지 'CSS ORCA' 도킹 베이</span>
+          </div>
+          <button class="modal-close" onclick="game.closeDocking()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,30,55,0.75); padding: 10px 16px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.25);">
+            <div>
+              <div style="font-size: 13px; font-weight: bold; color: var(--hud-cyan);">선체 정비 & 자원 정산 완료</div>
+              <div style="font-size: 11px; color: #88c0d0;">선체 내구도, 배터리, 산소가 100% 완전 재충전되었습니다.</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: #aaa;">보유 크레딧</div>
+              <div id="dock-credits" style="font-size: 22px; font-weight: bold; color: #ffd700;">0 CR</div>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <button class="tab-btn active" onclick="game.switchTab('upgrades', this)">잠수정 개조 업그레이드</button>
+            <button class="tab-btn" onclick="game.switchTab('cargo', this)">채굴 자원 거래소</button>
+            <button class="tab-btn" onclick="game.switchTab('mission', this)">탐사 지령 & 선구자 신호</button>
+          </div>
+
+          <!-- Upgrade Tab -->
+          <div id="tab-upgrades" class="tab-content">
+            <div class="upgrade-grid" id="upgrade-list">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Cargo Market Tab -->
+          <div id="tab-cargo" class="tab-content" style="display: none;">
+            <div id="cargo-sell-panel" style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Mission Tab -->
+          <div id="tab-mission" class="tab-content" style="display: none;">
+            <div style="background: rgba(0,25,45,0.65); padding: 16px; border-radius: 4px; line-height: 1.7; border: 1px solid rgba(0, 240, 255, 0.2);">
+              <h4 style="color: var(--hud-cyan); margin-bottom: 10px; font-size: 14px;">[극비 지령: 하달 프로토콜 (Hadal Protocol)]</h4>
+              <p style="color: #c0e0f0; margin-bottom: 12px;">
+                외계 해양 행성 칼립소-9의 수심 1,500m 암흑 해구 바닥에서 기원전 외계 선구자 문명의 양자 신호가 포착되었습니다.
+              </p>
+              <ul style="padding-left: 20px; color: #9feaff; margin-bottom: 14px; line-height: 1.8;">
+                <li>심해 450m 유적 알파: [선구자 침몰 제단] 암호 키 I 인양</li>
+                <li>심해 950m 유적 베타: [레비아탄 무덤 성소] 암호 키 II 인양</li>
+                <li>심해 1,380m 유적 감마: [양자 첨탑 성소] 암호 키 III 인양</li>
+                <li>심해 1,500m 해구 최심부: [선구자 송신기 코어]에 3개의 키를 삽입하여 활성화</li>
+              </ul>
+              <div id="mission-progress-box" style="font-weight: bold; color: #ffd700; font-size: 13px;"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <button class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 10px 24px;" onclick="game.closeDocking()">
+              출항하기 (UNDOCK & DIVE)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Codex / Encyclopedia Modal -->
+    <div id="codex-modal" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span>📖 심해 생태계 & 탐사 도감 (CODEX)</span>
+          </div>
+          <button class="modal-close" onclick="game.closeCodex()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="tabs">
+            <button class="tab-btn active" onclick="game.switchCodexTab('fauna', this)">심해 생물체</button>
+            <button class="tab-btn" onclick="game.switchCodexTab('minerals', this)">광물 & 자원</button>
+            <button class="tab-btn" onclick="game.switchCodexTab('lore', this)">발견된 유적 & 로그</button>
+          </div>
+          <div id="codex-content" class="codex-list">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameover-modal" class="modal-backdrop">
+      <div class="modal-box" style="border-color: var(--hud-red); max-width: 520px; text-align: center;">
+        <div class="modal-header" style="background: rgba(50, 10, 15, 0.85);">
+          <div class="modal-title" style="color: var(--hud-red); width: 100%; text-align: center;">
+            ⚠️ 잠수정 침몰 / 선체 완전 파괴
+          </div>
+        </div>
+        <div class="modal-body" style="align-items: center; text-align: center;">
+          <p id="gameover-reason" style="font-size: 14px; color: #ff9999; line-height: 1.6; margin: 15px 0;">
+            심해의 맹렬한 수압에 선체가 압괴되었거나 포식자에게 파괴되었습니다.
+          </p>
+          <div style="font-size: 12px; color: #88a; margin-bottom: 20px;">
+            모선 CSS ORCA의 비상 인양 드론이 조종사 탈출 캡슐을 긴급 회수했습니다. 미정산 화물은 유실되었으나 모든 업그레이드와 획득한 암호 키는 보존됩니다.
+          </div>
+          <button class="hud-btn" style="background: var(--hud-cyan); color: #001525; font-weight: bold; padding: 12px 28px;" onclick="game.respawnAtMothership()">
+            모선에서 긴급 재출항
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="modal-backdrop">
+      <div class="modal-box" style="max-width: 620px; border-color: #ffd700; box-shadow: 0 0 45px rgba(255, 215, 0, 0.5);">
+        <div class="modal-header" style="background: rgba(45, 35, 5, 0.85);">
+          <div class="modal-title" style="color: #ffd700;">
+            <span>🏆 미션 성공: 선구자의 신호 송출 완료</span>
+          </div>
+        </div>
+        <div class="modal-body" style="line-height: 1.7;">
+          <p style="font-size: 14px; color: #ffe680;">
+            수심 1,500m 암흑 해구 바닥에서 고대 외계 선구자의 송신기 코어가 눈부신 에메랄드빛 양자 광선을 뿜으며 각성했습니다!
+          </p>
+          <p style="color: #c0d8e8; font-size: 12px;">
+            행성 칼립소-9의 수억 년간 잠들어 있던 고대 문명의 데이터와 해양 생태계 조사가 모선 'CSS ORCA'와 지구 연합 본부로 전송되었습니다. 당신은 심해의 극한 수압과 거대 레비아탄의 공포를 이겨내고 인류 역사상 가장 위대한 심해 탐험가로 기록될 것입니다.
+          </p>
+          <div style="background: rgba(0,25,40,0.85); border: 1px solid #ffd700; border-radius: 4px; padding: 14px; margin: 12px 0;">
+            <div style="color: #ffd700; font-weight: bold; margin-bottom: 8px;">[탐사 결산 리포트]</div>
+            <div id="victory-stats" style="font-size: 12px; color: #9feaff; line-height: 1.8;"></div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="hud-btn" style="background: #ffd700; color: #02070e; font-weight: bold;" onclick="game.continueFreeplay()">
+              심해 무한 탐험 계속하기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Launch / Splash Intro -->
+    <div id="splash-screen">
+      <div class="title-glitch">ABYSSAL HORIZON</div>
+      <div class="subtitle">PROJECT HADAL: SUBMARINE SURVIVAL SIMULATION</div>
+      <div class="lore-intro">
+        <strong>[칼립소-9 해양 행성 탐사 브리핑]</strong><br>
+        수심 1,500m 초심해저 마리아나급 해구에서 출처 불명의 인공 외계 양자 신호가 수신되었습니다.<br><br>
+        귀하는 탐사 잠수정 <strong>'노틸러스-IV'</strong>의 단독 조종사로서 칠흑 같은 심해로 잠항하여 수압과 산소 결핍, 음향을 쫓는 미지의 거대 심해 괴수의 위협을 뚫고 3개의 외계 암호 키를 수집하여 신호기를 활성화해야 합니다.<br><br>
+        • 조명을 끄고 저속 운항하여 괴수를 피하십시오 (정숙 주행).<br>
+        • 소나 핑으로 칠흑 속 지형을 파악하되 소음에 주의하십시오.<br>
+        • 채굴한 광물로 모선에서 잠수정 내압 선체와 설비를 개조하십시오.
+      </div>
+      <button class="btn-launch" onclick="game.startDive()">
+        잠수정 시동 및 잠항 개시 (DIVE)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       ABYSSAL HORIZON: PROJECT HADAL - Standalone Core System
+       ========================================================================== */
+
+    // --- PROCEDURAL WEB AUDIO ENGINE ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+        this.ambientGain = null;
+        this.engineGain = null;
+        this.engineOsc = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+
+        // Master Volume
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+
+        // Lowpass filter for deep ocean muffled sound
+        this.oceanFilter = this.ctx.createBiquadFilter();
+        this.oceanFilter.type = 'lowpass';
+        this.oceanFilter.frequency.setValueAtTime(450, this.ctx.currentTime);
+        this.oceanFilter.connect(this.masterGain);
+
+        this.startAmbient();
+        this.startEngineSound();
+      }
+
+      startAmbient() {
+        if (!this.ctx) return;
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(54, this.ctx.currentTime);
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(55.5, this.ctx.currentTime);
+
+        this.ambientGain = this.ctx.createGain();
+        this.ambientGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+
+        osc1.connect(this.ambientGain);
+        osc2.connect(this.ambientGain);
+        this.ambientGain.connect(this.oceanFilter);
+
+        osc1.start();
+        osc2.start();
+      }
+
+      startEngineSound() {
+        if (!this.ctx) return;
+        this.engineOsc = this.ctx.createOscillator();
+        this.engineOsc.type = 'sawtooth';
+        this.engineOsc.frequency.setValueAtTime(32, this.ctx.currentTime);
+
+        const engineFilter = this.ctx.createBiquadFilter();
+        engineFilter.type = 'lowpass';
+        engineFilter.frequency.setValueAtTime(120, this.ctx.currentTime);
+
+        this.engineGain = this.ctx.createGain();
+        this.engineGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+
+        this.engineOsc.connect(engineFilter);
+        engineFilter.connect(this.engineGain);
+        this.engineGain.connect(this.oceanFilter);
+
+        this.engineOsc.start();
+      }
+
+      updateEngine(speedRatio) {
+        if (!this.ctx || !this.engineGain) return;
+        const targetVol = 0.02 + speedRatio * 0.18;
+        const targetFreq = 30 + speedRatio * 45;
+        this.engineGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, 0.1);
+        this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+      }
+
+      playSonarPing() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1350, now);
+        osc.frequency.exponentialRampToValueAtTime(750, now + 0.35);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+
+        // Ping echo delay node
+        const delay = this.ctx.createDelay();
+        delay.delayTime.value = 0.45;
+        const delayGain = this.ctx.createGain();
+        delayGain.gain.value = 0.4;
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        gain.connect(delay);
+        delay.connect(delayGain);
+        delayGain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 2.0);
+      }
+
+      playHullCreak() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(70 + Math.random() * 40, now);
+        osc.frequency.linearRampToValueAtTime(50 + Math.random() * 20, now + 1.2);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(220, now);
+        filter.Q.value = 8.0;
+
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 1.7);
+      }
+
+      playAlarm() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.setValueAtTime(660, now + 0.15);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+
+      playMiningLaser() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320 + Math.random() * 80, now);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.13);
+      }
+
+      playOreCollected() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
+          osc.connect(gain);
+          gain.connect(this.masterGain);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.28);
+        });
+      }
+
+      playLeviathanRoar() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(95, now);
+        osc.frequency.linearRampToValueAtTime(45, now + 2.2);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, now);
+        filter.Q.value = 6.0;
+
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0.45, now + 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 2.9);
+      }
+
+      playEmp() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.8);
+
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 1.3);
+      }
+
+      playImpact() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.4);
+
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.52);
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.75, this.ctx.currentTime);
+        }
+        return this.isMuted;
+      }
+    }
+
+    // --- GAME CONSTANTS & DEFINITIONS ---
+    const WORLD = {
+      WIDTH: 3200,          // 3.2km wide ocean trench
+      DEPTH_MAX: 1600,      // 1,600m deep
+      METERS_TO_PIXELS: 4,  // 1 meter = 4 pixels (Total height = 6400px)
+      SURFACE_Y: 0,
+      MOTHERSHIP_X: 1600,
+      MOTHERSHIP_Y: 80,
+      DOCK_RADIUS: 95
+    };
+
+    const MINERAL_TYPES = {
+      TITANIUM: { id: 'titanium', name: '티타늄(Titanium)', val: 60, color: '#a0b5c0', glow: '#d0e0ff', depthMin: 0, depthMax: 600, size: 9 },
+      COPPER: { id: 'copper', name: '구리(Copper)', val: 120, color: '#d97443', glow: '#ff9060', depthMin: 120, depthMax: 900, size: 8 },
+      QUARTZ: { id: 'quartz', name: '석영 결정(Quartz)', val: 200, color: '#c0f7ff', glow: '#00f0ff', depthMin: 250, depthMax: 1100, size: 10 },
+      LITHIUM: { id: 'lithium', name: '리튬(Lithium)', val: 380, color: '#e055a0', glow: '#ff70c0', depthMin: 500, depthMax: 1400, size: 11 },
+      DARK_MATTER: { id: 'dark_matter', name: '다크매터 결정(Dark Crystal)', val: 750, color: '#8822ff', glow: '#bb55ff', depthMin: 900, depthMax: 1600, size: 13 },
+      PRECURSOR_CUBE: { id: 'relic_cube', name: '선구자 암호 키(Precursor Key)', val: 2500, color: '#ffd700', glow: '#fff080', size: 16, isRelic: true }
+    };
+
+    const UPGRADE_DATA = [
+      {
+        id: 'hull',
+        name: '내압 선체 보강 (Pressure Hull)',
+        desc: '고수압 심해 잠항 한계 수심을 확장합니다.',
+        tiers: [
+          { level: 1, limit: 400, cost: 0, label: 'Mk I (400m 한계)' },
+          { level: 2, limit: 800, cost: 650, label: 'Mk II (800m 한계)' },
+          { level: 3, limit: 1200, cost: 1800, label: 'Mk III (1200m 한계)' },
+          { level: 4, limit: 1600, cost: 4200, label: 'Mk IV (1600m 초심해 허용)' }
+        ]
+      },
+      {
+        id: 'battery',
+        name: '핵융합 배터리 팩 (Fusion Battery)',
+        desc: '전력 저장 용량 및 효율을 증가시킵니다.',
+        tiers: [
+          { level: 1, capacity: 100, cost: 0, label: '100 kWh 기본 셀' },
+          { level: 2, capacity: 180, cost: 450, label: '180 kWh 대용량 팩' },
+          { level: 3, capacity: 300, cost: 1200, label: '300 kWh 핵융합 셀' },
+          { level: 4, capacity: 500, cost: 2800, label: '500 kWh 제로포인트 셀' }
+        ]
+      },
+      {
+        id: 'lights',
+        name: '초고휘도 LED 탐조등 (Searchlight)',
+        desc: '심해 암흑을 뚫는 헤드라이트 거리와 시야각을 넓힙니다.',
+        tiers: [
+          { level: 1, range: 240, angle: 0.45, cost: 0, label: '기본 할로겐 (240m 시야)' },
+          { level: 2, range: 360, angle: 0.60, cost: 400, label: '광폭 LED (360m 시야)' },
+          { level: 3, range: 520, angle: 0.80, cost: 1400, label: '양자 투과등 (520m 초장거리)' }
+        ]
+      },
+      {
+        id: 'engine',
+        name: '이온 추진기 & 정숙 모터 (Ion Thruster)',
+        desc: '추진 속도를 향상시키고 엔진 소음 발생량을 억제합니다.',
+        tiers: [
+          { level: 1, speed: 3.2, noiseScale: 1.0, cost: 0, label: '표준 스크루' },
+          { level: 2, speed: 4.5, noiseScale: 0.8, cost: 550, label: '수중 제트 펌프 (+40% 속도)' },
+          { level: 3, speed: 5.8, noiseScale: 0.55, cost: 1600, label: '무소음 이온 드라이브 (정숙 특화)' }
+        ]
+      },
+      {
+        id: 'emp',
+        name: '충격파 EMP 방어 펄스 (EMP Shockwave)',
+        desc: '[SPACE] 키로 360도 전자기 방출! 포식자를 기절시키고 밀쳐냅니다.',
+        tiers: [
+          { level: 0, unlocked: false, cost: 950, label: '미설치 (950 CR)' },
+          { level: 1, unlocked: true, cost: 0, label: '장착 완료 ([SPACE] 발사)' }
+        ]
+      },
+      {
+        id: 'nanite',
+        name: '자가 수리 나노봇 (Nanite Auto-Repair)',
+        desc: '배터리 여유 시 손상된 선체를 서서히 자동 복구합니다.',
+        tiers: [
+          { level: 0, unlocked: false, cost: 1800, label: '미설치 (1,800 CR)' },
+          { level: 1, unlocked: true, cost: 0, label: '나노봇 가동 (자동 수리 활성)' }
+        ]
+      },
+      {
+        id: 'cargo',
+        name: '화물창 적재 모듈 (Cargo Expansion)',
+        desc: '채굴 광물 및 유물 수납 한도를 늘립니다.',
+        tiers: [
+          { level: 1, cap: 15, cost: 0, label: '15 슬롯 표준 카고' },
+          { level: 2, cap: 30, cost: 350, label: '30 슬롯 확장 카고' },
+          { level: 3, cap: 50, cost: 900, label: '50 슬롯 대용량 카고' }
+        ]
+      }
+    ];
+
+    // --- MAIN GAME CONTROLLER ---
+    class SubmarineGame {
+      constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.sound = new SoundEngine();
+
+        // Screen Size
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
+        // Optimized persistent offscreen buffer for dynamic lighting mask
+        this.darkCanvas = document.createElement('canvas');
+        this.darkCanvas.width = this.width;
+        this.darkCanvas.height = this.height;
+        this.darkCtx = this.darkCanvas.getContext('2d');
+
+        // Camera
+        this.camera = { x: WORLD.MOTHERSHIP_X, y: 150, zoom: 1.0, shake: 0 };
+
+        // Submarine State
+        this.sub = {
+          x: WORLD.MOTHERSHIP_X,
+          y: 120,
+          vx: 0,
+          vy: 0,
+          angle: Math.PI / 2, // Heading angle
+          turretAngle: 0,
+          radius: 18,
+          hull: 100,
+          maxHull: 100,
+          oxygen: 100,
+          maxOxygen: 100,
+          battery: 100,
+          maxBattery: 100,
+          noise: 10, // dB
+          lightsOn: true,
+          silentMode: false,
+          empCooldown: 0,
+          naniteTimer: 0
+        };
+
+        // Upgrades Progress
+        this.upgrades = {
+          hull: 1,
+          battery: 1,
+          lights: 1,
+          engine: 1,
+          emp: 0,
+          nanite: 0,
+          cargo: 1
+        };
+
+        // Inventory & Resources
+        this.credits = 150;
+        this.cargo = []; // [{type, name, val}, ...]
+        this.relicKeys = { 1: false, 2: false, 3: false };
+        this.coreActivated = false;
+        this.lastSoldHistory = [];
+
+        // Active Sonar
+        this.sonar = {
+          active: false,
+          timer: 0,
+          radius: 0,
+          maxRadius: 850,
+          cooldown: 0
+        };
+
+        // Mining Laser / Robotic Claw
+        this.laser = {
+          active: false,
+          targetNode: null,
+          endX: 0,
+          endY: 0
+        };
+
+        // World Objects
+        this.terrain = [];
+        this.mineralNodes = [];
+        this.floatingMinerals = [];
+        this.creatures = [];
+        this.particles = [];
+        this.bubbles = [];
+        this.ruins = [];
+        this.vents = [];
+
+        // Input
+        this.keys = {};
+        this.mouse = { x: this.width / 2, y: this.height / 2, down: false, worldX: 0, worldY: 0 };
+
+        // Stats & Tracking
+        this.stats = {
+          maxDepthReached: 0,
+          mineralsMined: 0,
+          playTimeSec: 0
+        };
+
+        // UI State
+        this.activeModal = null;
+        this.lastTime = performance.now();
+        this.creakCheckTimer = 0;
+        this.isGameOver = false;
+
+        this.initInput();
+        this.generateWorld();
+        this.loadSaveData();
+        this.updateHUD();
+
+        window.addEventListener('resize', () => this.onResize());
+      }
+
+      onResize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        if (this.darkCanvas) {
+          this.darkCanvas.width = this.width;
+          this.darkCanvas.height = this.height;
+        }
+      }
+
+      initInput() {
+        window.addEventListener('keydown', (e) => {
+          this.keys[e.code] = true;
+          if (e.code === 'KeyQ') {
+            this.toggleHeadlights();
+          }
+          if (e.code === 'KeyE') {
+            // Contextual E key: Dock if near mothership, otherwise toggle headlights
+            const dist = Math.hypot(this.sub.x - WORLD.MOTHERSHIP_X, this.sub.y - WORLD.MOTHERSHIP_Y);
+            if (dist < WORLD.DOCK_RADIUS + 40) {
+              this.openDocking();
+            } else {
+              this.toggleHeadlights();
+            }
+          }
+          if (e.code === 'KeyF') {
+            this.triggerSonarPing();
+          }
+          if (e.code === 'Space') {
+            this.triggerEmpPulse();
+          }
+          if (e.code === 'KeyC') {
+            this.toggleCodex();
+          }
+          if (e.code === 'KeyM') {
+            this.pingMothership();
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.code] = false;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          this.mouse.x = e.clientX;
+          this.mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', (e) => {
+          if (e.button === 0) {
+            this.mouse.down = true;
+          }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+          if (e.button === 0) {
+            this.mouse.down = false;
+            this.laser.active = false;
+          }
+        });
+
+        document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+          const muted = this.sound.toggleMute();
+          document.getElementById('btn-audio-toggle').textContent = muted ? '🔇' : '🔊';
+        });
+
+        document.getElementById('btn-open-codex').addEventListener('click', () => {
+          this.openCodex();
+        });
+
+        document.getElementById('btn-dock-manual').addEventListener('click', () => {
+          this.openDocking();
+        });
+      }
+
+      startDive() {
+        document.getElementById('splash-screen').style.display = 'none';
+        this.sound.init();
+        this.sound.playSonarPing();
+        this.showTicker('노틸러스-IV 원자로 가동. 심해 탐항을 시작합니다.', 'discovery');
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      // --- WORLD PROCEDURAL GENERATION ---
+      generateWorld() {
+        const totalHeight = WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS;
+
+        // 1. Generate Cave Walls (Left and Right boundaries with varied chasms)
+        this.terrain = [];
+        const steps = 160;
+        const dy = totalHeight / steps;
+
+        for (let i = 0; i <= steps; i++) {
+          const y = i * dy;
+          const depthM = y / WORLD.METERS_TO_PIXELS;
+
+          // Chasm width varies with depth (wider at top, narrower & claustrophobic in the trench)
+          const center = WORLD.WIDTH / 2 + Math.sin(i * 0.15) * 220 + Math.cos(i * 0.05) * 350;
+          let halfWidth = 750 - (depthM / WORLD.DEPTH_MAX) * 320;
+          halfWidth += Math.sin(i * 0.4) * 120 + Math.cos(i * 0.8) * 60;
+          if (halfWidth < 220) halfWidth = 220;
+
+          const leftX = Math.max(100, center - halfWidth);
+          const rightX = Math.min(WORLD.WIDTH - 100, center + halfWidth);
+
+          this.terrain.push({ y, leftX, rightX, center, depthM });
+        }
+
+        // 2. Generate Mineral Nodes along walls and interior ridges
+        this.mineralNodes = [];
+        for (let i = 4; i < this.terrain.length - 2; i++) {
+          const seg = this.terrain[i];
+          const depthM = seg.depthM;
+
+          let candidates = [];
+          if (depthM < 500) candidates.push(MINERAL_TYPES.TITANIUM);
+          if (depthM > 100 && depthM < 850) candidates.push(MINERAL_TYPES.COPPER);
+          if (depthM > 200 && depthM < 1100) candidates.push(MINERAL_TYPES.QUARTZ);
+          if (depthM > 450 && depthM < 1400) candidates.push(MINERAL_TYPES.LITHIUM);
+          if (depthM > 850) candidates.push(MINERAL_TYPES.DARK_MATTER);
+
+          if (candidates.length > 0 && Math.random() < 0.65) {
+            const mat = candidates[Math.floor(Math.random() * candidates.length)];
+            this.mineralNodes.push({
+              x: seg.leftX + 18 + Math.random() * 25,
+              y: seg.y + (Math.random() - 0.5) * dy,
+              type: mat,
+              hp: 100,
+              maxHp: 100,
+              radius: mat.size
+            });
+          }
+          if (candidates.length > 0 && Math.random() < 0.65) {
+            const mat = candidates[Math.floor(Math.random() * candidates.length)];
+            this.mineralNodes.push({
+              x: seg.rightX - 18 - Math.random() * 25,
+              y: seg.y + (Math.random() - 0.5) * dy,
+              type: mat,
+              hp: 100,
+              maxHp: 100,
+              radius: mat.size
+            });
+          }
+        }
+
+        // 3. Hydrothermal Vents
+        this.vents = [
+          { x: 1400, y: 350 * 4, temp: '320°C', active: true },
+          { x: 1850, y: 680 * 4, temp: '410°C', active: true },
+          { x: 1350, y: 1120 * 4, temp: '460°C', active: true },
+          { x: 1720, y: 1380 * 4, temp: '520°C', active: true }
+        ];
+
+        // 4. Ancient Alien Ruins (Precursor Relics)
+        this.ruins = [
+          {
+            id: 1,
+            name: '선구자 침몰 제단 (Altar of the Sunken)',
+            depth: 450,
+            x: 1650,
+            y: 450 * WORLD.METERS_TO_PIXELS,
+            relicCollected: false,
+            color: '#00ffcc',
+            glyph: '∆-ALPHA'
+          },
+          {
+            id: 2,
+            name: '레비아탄 무덤 성소 (Sanctum of the Deep Maw)',
+            depth: 950,
+            x: 1520,
+            y: 950 * WORLD.METERS_TO_PIXELS,
+            relicCollected: false,
+            color: '#bb55ff',
+            glyph: 'Ω-BETA'
+          },
+          {
+            id: 3,
+            name: '선구자 양자 첨탑 (Precursor Quantum Spire)',
+            depth: 1380,
+            x: 1680,
+            y: 1380 * WORLD.METERS_TO_PIXELS,
+            relicCollected: false,
+            color: '#ffd700',
+            glyph: 'Ψ-GAMMA'
+          },
+          {
+            id: 'CORE',
+            name: '초심해 선구자 주 송신기 (Precursor Singularity Relay)',
+            depth: 1500,
+            x: WORLD.WIDTH / 2,
+            y: 1500 * WORLD.METERS_TO_PIXELS,
+            activated: false,
+            color: '#10ff99'
+          }
+        ];
+
+        // 5. Marine Fauna Ecosystem
+        this.creatures = [];
+
+        // Harmless Bioluminescent Jellyfish (0m - 1200m)
+        for (let i = 0; i < 40; i++) {
+          const depth = 80 + Math.random() * 1100;
+          this.creatures.push({
+            type: 'jellyfish',
+            name: '발광 해파리 (Aura Medusa)',
+            x: 1200 + Math.random() * 800,
+            y: depth * WORLD.METERS_TO_PIXELS,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.3 - 0.1,
+            radius: 12 + Math.random() * 8,
+            pulseTimer: Math.random() * Math.PI,
+            color: '#00ffff',
+            isHostile: false
+          });
+        }
+
+        // Phantom Rays (150m - 800m)
+        for (let i = 0; i < 16; i++) {
+          const depth = 200 + Math.random() * 650;
+          this.creatures.push({
+            type: 'phantom_ray',
+            name: '유령 가오리 (Phantom Ray)',
+            x: 1300 + Math.random() * 600,
+            y: depth * WORLD.METERS_TO_PIXELS,
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 0.4,
+            angle: 0,
+            radius: 22,
+            color: '#55ffaa',
+            isHostile: false
+          });
+        }
+
+        // Hostile Predator: Abyss Prowlers (400m - 1100m)
+        for (let i = 0; i < 9; i++) {
+          const depth = 420 + Math.random() * 700;
+          this.creatures.push({
+            type: 'prowler',
+            name: '심해 프라울러 (Abyss Prowler)',
+            x: 1250 + Math.random() * 700,
+            y: depth * WORLD.METERS_TO_PIXELS,
+            vx: 0,
+            vy: 0,
+            speed: 2.8,
+            aggro: false,
+            radius: 20,
+            color: '#ff4455',
+            isHostile: true,
+            attackCooldown: 0
+          });
+        }
+
+        // Apex Predator: The Hadal Leviathan (950m - 1550m)
+        this.leviathan = {
+          type: 'leviathan',
+          name: '하달 레비아탄 [스킬라] (The Hadal Leviathan)',
+          x: WORLD.WIDTH / 2,
+          y: 1100 * WORLD.METERS_TO_PIXELS,
+          vx: 0,
+          vy: 0,
+          angle: 0,
+          segments: [],
+          length: 16,
+          segmentRadius: 28,
+          headRadius: 36,
+          speed: 4.2,
+          aggro: false,
+          aggroTimer: 0,
+          color: '#ff2244',
+          roarCooldown: 0,
+          isHostile: true
+        };
+        for (let s = 0; s < this.leviathan.length; s++) {
+          this.leviathan.segments.push({
+            x: this.leviathan.x,
+            y: this.leviathan.y + s * 22
+          });
+        }
+      }
+
+      // --- SUBMARINE CONTROLS & ACTIONS ---
+      toggleHeadlights() {
+        this.sub.lightsOn = !this.sub.lightsOn;
+        const badge = document.getElementById('badge-lights');
+        if (this.sub.lightsOn) {
+          badge.className = 'badge active';
+          badge.textContent = 'LIGHTS ON [Q]';
+          this.showTicker('헤드라이트 점등: 시야 확보 (빛 감지 포식자 주의)', 'ticker');
+        } else {
+          badge.className = 'badge';
+          badge.textContent = 'LIGHTS OFF [Q]';
+          this.showTicker('헤드라이트 소등: 정숙 모드 진입', 'discovery');
+        }
+      }
+
+      triggerSonarPing() {
+        if (this.sub.battery < 8) {
+          this.showTicker('전력 부족: 소나 발사 불가!', 'alert');
+          return;
+        }
+        if (this.sonar.cooldown > 0) return;
+
+        this.sub.battery -= 8;
+        this.sonar.active = true;
+        this.sonar.radius = 20;
+        this.sonar.timer = 10.0; // 10 seconds wireframe visibility
+        this.sonar.cooldown = 4.0;
+
+        // Big acoustic spike (alerts nearby predators)
+        this.sub.noise = Math.max(this.sub.noise, 75);
+
+        this.sound.playSonarPing();
+        this.showTicker('능동 소나 핑 방출! (주변 지형 탐지, 음향 스파이크 발생)', 'ticker');
+
+        // Check if leviathan or prowlers hear it
+        const distLev = Math.hypot(this.sub.x - this.leviathan.x, this.sub.y - this.leviathan.y);
+        if (distLev < 1600) {
+          this.leviathan.aggro = true;
+          this.leviathan.aggroTimer = 12.0;
+          this.sound.playLeviathanRoar();
+          this.showTicker('⚠️ 경고: 소나 반향이 초거대 생명체의 주의를 끌었습니다!', 'alert');
+        }
+      }
+
+      triggerEmpPulse() {
+        if (!this.upgrades.emp) {
+          this.showTicker('충격파 EMP 펄스 장비가 장착되지 않았습니다. 모선에서 개조하십시오.', 'ticker');
+          return;
+        }
+        if (this.sub.empCooldown > 0) {
+          this.showTicker(`EMP 충전 중 (${this.sub.empCooldown.toFixed(1)}초 남음)`, 'ticker');
+          return;
+        }
+        if (this.sub.battery < 25) {
+          this.showTicker('전력 부족: EMP 발사에 25% 전력이 필요합니다.', 'alert');
+          return;
+        }
+
+        this.sub.battery -= 25;
+        this.sub.empCooldown = 15.0;
+        this.sound.playEmp();
+        this.createShockwaveParticles(this.sub.x, this.sub.y);
+        this.showTicker('⚡ EMP 충격파 방출! 주변 유기체 신경계 일시 마비 및 척력 발생', 'discovery');
+
+        // Stun nearby creatures
+        this.creatures.forEach(c => {
+          const d = Math.hypot(c.x - this.sub.x, c.y - this.sub.y);
+          if (d < 450) {
+            c.aggro = false;
+            c.attackCooldown = 8.0;
+            const pushAngle = Math.atan2(c.y - this.sub.y, c.x - this.sub.x);
+            c.vx = Math.cos(pushAngle) * 8;
+            c.vy = Math.sin(pushAngle) * 8;
+          }
+        });
+
+        // Stun leviathan
+        const distLev = Math.hypot(this.leviathan.x - this.sub.x, this.leviathan.y - this.sub.y);
+        if (distLev < 550) {
+          this.leviathan.aggro = false;
+          this.leviathan.aggroTimer = 0;
+          this.leviathan.vx = 0;
+          this.leviathan.vy = 0;
+          this.showTicker('⚡ 레비아탄 감각 기관 마비 성공! 즉시 도주하십시오.', 'discovery');
+        }
+      }
+
+      pingMothership() {
+        const d = Math.hypot(this.sub.x - WORLD.MOTHERSHIP_X, this.sub.y - WORLD.MOTHERSHIP_Y);
+        const depthM = (this.sub.y / WORLD.METERS_TO_PIXELS).toFixed(0);
+        this.showTicker(`모선 CSS ORCA 위치: 방위 상방 | 수심 차: ${depthM}m | 직선거리: ${(d/WORLD.METERS_TO_PIXELS).toFixed(0)}m`, 'ticker');
+      }
+
+      // --- GAME LOOP ---
+      loop(timestamp) {
+        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
+        this.lastTime = timestamp;
+
+        if (!this.isGameOver && !this.activeModal) {
+          this.update(dt);
+        }
+
+        this.render();
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      // --- UPDATE LOGIC ---
+      update(dt) {
+        this.stats.playTimeSec += dt;
+
+        // Current Depth in meters
+        const currentDepthM = Math.max(0, this.sub.y / WORLD.METERS_TO_PIXELS);
+        if (currentDepthM > this.stats.maxDepthReached) {
+          this.stats.maxDepthReached = currentDepthM;
+        }
+
+        // Get Current Tier Stats
+        const hullTier = UPGRADE_DATA[0].tiers[this.upgrades.hull - 1];
+        const batteryTier = UPGRADE_DATA[1].tiers[this.upgrades.battery - 1];
+        const engineTier = UPGRADE_DATA[3].tiers[this.upgrades.engine - 1];
+        const cargoTier = UPGRADE_DATA[6].tiers[this.upgrades.cargo - 1];
+
+        // 1. Controls & Propulsion
+        let thrustX = 0;
+        let thrustY = 0;
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) thrustY -= 1;
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) thrustY += 1;
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) thrustX -= 1;
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) thrustX += 1;
+
+        const isThrusting = (thrustX !== 0 || thrustY !== 0);
+
+        if (isThrusting && this.sub.battery > 0) {
+          const len = Math.hypot(thrustX, thrustY);
+          const nx = thrustX / len;
+          const ny = thrustY / len;
+
+          const accel = engineTier.speed * 2.2;
+          this.sub.vx += nx * accel * dt;
+          this.sub.vy += ny * accel * dt;
+
+          // Battery consumption while moving
+          this.sub.battery = Math.max(0, this.sub.battery - 0.75 * dt);
+
+          // Add bubble exhaust
+          if (Math.random() < 0.4) {
+            this.bubbles.push({
+              x: this.sub.x - nx * 18 + (Math.random() - 0.5) * 6,
+              y: this.sub.y - ny * 18 + (Math.random() - 0.5) * 6,
+              vx: -nx * 1.5 + (Math.random() - 0.5) * 0.5,
+              vy: -ny * 1.5 - 0.5,
+              life: 1.2,
+              maxLife: 1.2,
+              size: 2 + Math.random() * 3
+            });
+          }
+        }
+
+        // Water drag & viscous damping
+        this.sub.vx *= Math.pow(0.88, dt * 60);
+        this.sub.vy *= Math.pow(0.88, dt * 60);
+
+        // Gentle natural buoyancy
+        this.sub.vy -= 0.15 * dt;
+
+        // Position update
+        this.sub.x += this.sub.vx;
+        this.sub.y += this.sub.vy;
+
+        // Heading angle smoothly follows velocity or mouse
+        const speed = Math.hypot(this.sub.vx, this.sub.vy);
+        if (speed > 0.3) {
+          const moveAngle = Math.atan2(this.sub.vy, this.sub.vx);
+          this.sub.angle = moveAngle;
+        }
+
+        // Turret / Headlight angle aims at mouse in world coordinates
+        this.mouse.worldX = this.camera.x + (this.mouse.x - this.width / 2);
+        this.mouse.worldY = this.camera.y + (this.mouse.y - this.height / 2);
+        this.sub.turretAngle = Math.atan2(this.mouse.worldY - this.sub.y, this.mouse.worldX - this.sub.x);
+
+        // Sound engine update for thruster pitch
+        this.sound.updateEngine(Math.min(1.0, speed / 5.0));
+
+        // 2. Battery & Headlights
+        if (this.sub.lightsOn && this.sub.battery > 0) {
+          this.sub.battery = Math.max(0, this.sub.battery - 0.45 * dt);
+        }
+
+        // 3. Oxygen Consumption
+        this.sub.oxygen = Math.max(0, this.sub.oxygen - 0.28 * dt);
+        if (this.sub.oxygen <= 0) {
+          this.triggerGameOver('산소 완전 고갈: 승무원 질식으로 사망했습니다.');
+          return;
+        }
+
+        // 4. Acoustic Noise Signature (dB)
+        let baseNoise = 10;
+        if (isThrusting) {
+          baseNoise += (speed * 9.5) * engineTier.noiseScale;
+        }
+        if (this.laser.active) baseNoise += 25;
+        this.sub.noise = (this.sub.noise * 0.92) + (baseNoise * 0.08);
+
+        // Silent mode check
+        this.sub.silentMode = (!this.sub.lightsOn && this.sub.noise < 22);
+        const silentBadge = document.getElementById('badge-silent');
+        if (this.sub.silentMode) {
+          silentBadge.className = 'badge silent';
+          silentBadge.textContent = 'SILENT RUN [은신]';
+        } else {
+          silentBadge.className = 'badge';
+          silentBadge.textContent = 'NORMAL RUN';
+        }
+
+        // 5. Depth Pressure & Crush Mechanics
+        const safeLimitM = hullTier.limit;
+        if (currentDepthM > safeLimitM) {
+          const exceedRatio = (currentDepthM - safeLimitM) / 100;
+          const damagePerSec = 4.0 * exceedRatio;
+          this.sub.hull = Math.max(0, this.sub.hull - damagePerSec * dt);
+
+          // Creaking sounds & alarm
+          this.creakCheckTimer += dt;
+          if (this.creakCheckTimer > 2.5) {
+            this.creakCheckTimer = 0;
+            this.sound.playHullCreak();
+            this.sound.playAlarm();
+            this.camera.shake = 6;
+            this.showTicker(`⚠️ 경고: 수압 한계 초과! (${currentDepthM.toFixed(0)}m / ${safeLimitM}m) 선체 균열 발생!`, 'alert');
+          }
+        }
+
+        // Nanite Auto-Repair
+        if (this.upgrades.nanite && this.sub.battery > 30 && this.sub.hull < this.sub.maxHull) {
+          this.sub.naniteTimer += dt;
+          if (this.sub.naniteTimer > 1.0) {
+            this.sub.naniteTimer = 0;
+            this.sub.hull = Math.min(this.sub.maxHull, this.sub.hull + 1.2);
+            this.sub.battery -= 0.6;
+          }
+        }
+
+        // Check Hull Death
+        if (this.sub.hull <= 0) {
+          this.triggerGameOver('심해 수압 및 선체 파괴: 잠수정이 내압 붕괴로 침몰했습니다.');
+          return;
+        }
+
+        // Cooldowns
+        if (this.sub.empCooldown > 0) this.sub.empCooldown = Math.max(0, this.sub.empCooldown - dt);
+        if (this.sonar.cooldown > 0) this.sonar.cooldown = Math.max(0, this.sonar.cooldown - dt);
+        if (this.sonar.active) {
+          this.sonar.radius += 280 * dt;
+          this.sonar.timer -= dt;
+          if (this.sonar.timer <= 0 || this.sonar.radius >= this.sonar.maxRadius) {
+            this.sonar.active = false;
+          }
+        }
+
+        // 6. Terrain Collision Detection
+        this.handleTerrainCollision();
+
+        // 7. Mining Laser Action
+        this.updateMiningLaser(dt);
+
+        // 8. Floating Minerals Magnet Suction
+        this.updateFloatingMinerals(dt);
+
+        // 9. Ecosystem & Creature AI
+        this.updateCreatures(dt);
+
+        // 10. Ancient Ruins & Beacon Trigger Check
+        this.updateRuins();
+
+        // 11. Mothership Proximity & Auto Dock Prompt
+        this.updateMothershipDock();
+
+        // 12. Particles & Bubbles
+        this.updateParticles(dt);
+
+        // 13. Camera Tracking with Soft Lerp & Shake
+        this.camera.x += (this.sub.x - this.camera.x) * 0.08;
+        this.camera.y += (this.sub.y - this.camera.y) * 0.08;
+        if (this.camera.shake > 0) {
+          this.camera.x += (Math.random() - 0.5) * this.camera.shake;
+          this.camera.y += (Math.random() - 0.5) * this.camera.shake;
+          this.camera.shake = Math.max(0, this.camera.shake - dt * 15);
+        }
+
+        this.updateHUD();
+      }
+
+      // --- MINING LASER / EXTRACTOR ARM ---
+      updateMiningLaser(dt) {
+        if (!this.mouse.down || this.sub.battery <= 0) {
+          this.laser.active = false;
+          this.laser.targetNode = null;
+          return;
+        }
+
+        const reach = 240; // Laser range
+        let closestNode = null;
+        let closestDist = reach;
+
+        for (const node of this.mineralNodes) {
+          const d = Math.hypot(node.x - this.mouse.worldX, node.y - this.mouse.worldY);
+          const distFromSub = Math.hypot(node.x - this.sub.x, node.y - this.sub.y);
+          if (d < node.radius + 32 && distFromSub < reach && distFromSub < closestDist) {
+            closestNode = node;
+            closestDist = distFromSub;
+          }
+        }
+
+        this.laser.active = true;
+        this.laser.targetNode = closestNode;
+        this.sub.battery = Math.max(0, this.sub.battery - 0.85 * dt);
+        this.sound.playMiningLaser();
+
+        if (closestNode) {
+          this.laser.endX = closestNode.x;
+          this.laser.endY = closestNode.y;
+          closestNode.hp -= 45 * dt;
+
+          // Spawn laser cutting sparks
+          if (Math.random() < 0.6) {
+            this.particles.push({
+              x: closestNode.x + (Math.random() - 0.5) * 8,
+              y: closestNode.y + (Math.random() - 0.5) * 8,
+              vx: (Math.random() - 0.5) * 2.5,
+              vy: (Math.random() - 0.5) * 2.5 - 0.5,
+              color: closestNode.type.color,
+              size: 2 + Math.random() * 2,
+              life: 0.6,
+              maxLife: 0.6
+            });
+          }
+
+          if (closestNode.hp <= 0) {
+            // Drop floating mineral chunk
+            this.floatingMinerals.push({
+              x: closestNode.x,
+              y: closestNode.y,
+              vx: (Math.random() - 0.5) * 1.5,
+              vy: -1.2,
+              type: closestNode.type,
+              radius: 8,
+              life: 45
+            });
+
+            this.mineralNodes = this.mineralNodes.filter(n => n !== closestNode);
+            this.stats.mineralsMined++;
+            this.showTicker(`광맥 채취 완료: ${closestNode.type.name} 파편 회수 가능`, 'ticker');
+          }
+        } else {
+          // Free fire beam into water towards aim cursor
+          const aimAngle = this.sub.turretAngle;
+          const mouseDist = Math.hypot(this.mouse.worldX - this.sub.x, this.mouse.worldY - this.sub.y);
+          const actualDist = Math.min(reach, mouseDist);
+          this.laser.endX = this.sub.x + Math.cos(aimAngle) * actualDist;
+          this.laser.endY = this.sub.y + Math.sin(aimAngle) * actualDist;
+
+          if (Math.random() < 0.3) {
+            this.bubbles.push({
+              x: this.laser.endX,
+              y: this.laser.endY,
+              vx: (Math.random() - 0.5) * 0.8,
+              vy: -1.2,
+              life: 0.7,
+              maxLife: 0.7,
+              size: 2 + Math.random() * 2
+            });
+          }
+        }
+      }
+
+      updateFloatingMinerals(dt) {
+        const cargoCap = UPGRADE_DATA[6].tiers[this.upgrades.cargo - 1].cap;
+
+        for (let i = this.floatingMinerals.length - 1; i >= 0; i--) {
+          const item = this.floatingMinerals[i];
+          const dist = Math.hypot(this.sub.x - item.x, this.sub.y - item.y);
+
+          // Magnetic suction towards submarine
+          if (dist < 190) {
+            const angle = Math.atan2(this.sub.y - item.y, this.sub.x - item.x);
+            const speed = (190 - dist) * 0.085;
+            item.vx += Math.cos(angle) * speed;
+            item.vy += Math.sin(angle) * speed;
+          }
+
+          item.vx *= 0.92;
+          item.vy *= 0.92;
+          item.x += item.vx;
+          item.y += item.vy;
+          item.life -= dt;
+
+          // Pickup collision
+          if (dist < this.sub.radius + item.radius) {
+            if (this.cargo.length < cargoCap) {
+              this.cargo.push(item.type);
+              this.sound.playOreCollected();
+              this.showTicker(`자원 수납 완료: ${item.type.name} (+${item.type.val} CR 가치)`, 'ticker');
+              this.floatingMinerals.splice(i, 1);
+            } else {
+              this.showTicker('⚠️ 화물창 가득 참! 모선에 도킹하여 환전하십시오.', 'alert');
+            }
+          } else if (item.life <= 0) {
+            this.floatingMinerals.splice(i, 1);
+          }
+        }
+      }
+
+      // --- CREATURE AI & ECOSYSTEM ---
+      updateCreatures(dt) {
+        // 1. Swarms & Peaceful Fauna
+        this.creatures.forEach(c => {
+          if (c.type === 'jellyfish') {
+            c.pulseTimer += dt * 2.2;
+            c.vy += Math.sin(c.pulseTimer) * 0.04;
+            c.x += c.vx;
+            c.y += c.vy;
+
+            if (c.x < 1100 || c.x > 2100) c.vx *= -1;
+          } else if (c.type === 'phantom_ray') {
+            c.x += c.vx;
+            c.y += c.vy;
+            c.angle = Math.atan2(c.vy, c.vx);
+            if (c.x < 1100 || c.x > 2100) c.vx *= -1;
+          } else if (c.type === 'prowler') {
+            // Abyss Prowler AI
+            const dist = Math.hypot(this.sub.x - c.x, this.sub.y - c.y);
+            const canDetect = (!this.sub.silentMode && (dist < 320 || (this.sub.lightsOn && dist < 450)));
+
+            if (canDetect && c.attackCooldown <= 0) {
+              c.aggro = true;
+              const angle = Math.atan2(this.sub.y - c.y, this.sub.x - c.x);
+              c.vx = Math.cos(angle) * c.speed;
+              c.vy = Math.sin(angle) * c.speed;
+
+              if (dist < this.sub.radius + c.radius) {
+                this.sub.hull = Math.max(0, this.sub.hull - 14);
+                this.sound.playImpact();
+                this.camera.shake = 9;
+                c.attackCooldown = 3.5;
+                c.vx *= -2;
+                c.vy *= -2;
+                this.showTicker('⚠️ 경고: 심해 프라울러의 선체 공격! 내구도 손상!', 'alert');
+              }
+            } else {
+              c.aggro = false;
+              if (c.attackCooldown > 0) c.attackCooldown -= dt;
+              c.vx *= 0.95;
+              c.vy *= 0.95;
+            }
+            c.x += c.vx;
+            c.y += c.vy;
+          }
+        });
+
+        // 2. Apex Hadal Leviathan AI
+        const lev = this.leviathan;
+        const distLev = Math.hypot(this.sub.x - lev.x, this.sub.y - lev.y);
+
+        // Leviathan Hunts by Hearing / Noise and Sonar
+        if (!this.sub.silentMode && (this.sub.noise > 40 && distLev < 750)) {
+          lev.aggro = true;
+          lev.aggroTimer = 8.0;
+        }
+
+        if (lev.aggroTimer > 0) {
+          lev.aggroTimer -= dt;
+          lev.roarCooldown -= dt;
+
+          if (lev.roarCooldown <= 0) {
+            lev.roarCooldown = 6.0;
+            this.sound.playLeviathanRoar();
+            this.camera.shake = 12;
+            this.showTicker('🚨 거대 레비아탄 [스킬라]가 잠수정의 음향을 감지하고 돌진합니다!', 'alert');
+          }
+
+          const chaseAngle = Math.atan2(this.sub.y - lev.y, this.sub.x - lev.x);
+          lev.vx = Math.cos(chaseAngle) * lev.speed;
+          lev.vy = Math.sin(chaseAngle) * lev.speed;
+          lev.angle = chaseAngle;
+
+          if (distLev < this.sub.radius + lev.headRadius) {
+            this.sub.hull = Math.max(0, this.sub.hull - 35);
+            this.sound.playImpact();
+            this.camera.shake = 22;
+            lev.aggroTimer = 3.0;
+            this.sub.vx += Math.cos(chaseAngle) * 9;
+            this.sub.vy += Math.sin(chaseAngle) * 9;
+            this.showTicker('🚨 치명적 타격: 레비아탄의 파쇄성 물어뜯기! 선체 대파 위기!', 'alert');
+          }
+        } else {
+          lev.vx = Math.sin(this.stats.playTimeSec * 0.2) * 1.8;
+          lev.vy = Math.cos(this.stats.playTimeSec * 0.15) * 1.2;
+          lev.angle = Math.atan2(lev.vy, lev.vx);
+        }
+
+        lev.x += lev.vx;
+        lev.y += lev.vy;
+
+        lev.segments[0].x = lev.x;
+        lev.segments[0].y = lev.y;
+        for (let i = 1; i < lev.segments.length; i++) {
+          const prev = lev.segments[i - 1];
+          const curr = lev.segments[i];
+          const angle = Math.atan2(prev.y - curr.y, prev.x - curr.x);
+          curr.x = prev.x - Math.cos(angle) * 20;
+          curr.y = prev.y - Math.sin(angle) * 20;
+        }
+      }
+
+      // --- TERRAIN COLLISION ---
+      handleTerrainCollision() {
+        const y = this.sub.y;
+        const totalHeight = WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS;
+
+        // Sea floor collision
+        if (y >= totalHeight - 40) {
+          this.sub.y = totalHeight - 40;
+          if (this.sub.vy > 1.5) {
+            this.sub.hull = Math.max(0, this.sub.hull - this.sub.vy * 4);
+            this.sound.playImpact();
+            this.camera.shake = 8;
+          }
+          this.sub.vy = 0;
+        }
+
+        // Ocean surface collision
+        if (y <= 15) {
+          this.sub.y = 15;
+          this.sub.vy = Math.max(0, this.sub.vy);
+        }
+
+        // Matching terrain segment
+        const dy = totalHeight / (this.terrain.length - 1);
+        const idx = Math.floor(y / dy);
+        if (idx >= 0 && idx < this.terrain.length - 1) {
+          const segA = this.terrain[idx];
+          const segB = this.terrain[idx + 1];
+          const t = (y - segA.y) / dy;
+          const leftBound = segA.leftX + (segB.leftX - segA.leftX) * t;
+          const rightBound = segA.rightX + (segB.rightX - segA.rightX) * t;
+
+          // Left Wall collision
+          if (this.sub.x - this.sub.radius < leftBound) {
+            this.sub.x = leftBound + this.sub.radius;
+            if (Math.abs(this.sub.vx) > 2.0) {
+              this.sub.hull = Math.max(0, this.sub.hull - Math.abs(this.sub.vx) * 3);
+              this.sound.playImpact();
+              this.camera.shake = 7;
+              this.showTicker('선체 암초 충돌! 조타에 주의하십시오.', 'alert');
+            }
+            this.sub.vx = Math.abs(this.sub.vx) * 0.4;
+          }
+
+          // Right Wall collision
+          if (this.sub.x + this.sub.radius > rightBound) {
+            this.sub.x = rightBound - this.sub.radius;
+            if (Math.abs(this.sub.vx) > 2.0) {
+              this.sub.hull = Math.max(0, this.sub.hull - Math.abs(this.sub.vx) * 3);
+              this.sound.playImpact();
+              this.camera.shake = 7;
+              this.showTicker('선체 암초 충돌! 조타에 주의하십시오.', 'alert');
+            }
+            this.sub.vx = -Math.abs(this.sub.vx) * 0.4;
+          }
+        }
+      }
+
+      // --- RUINS & RELIC INTERACTIONS ---
+      updateRuins() {
+        this.ruins.forEach(r => {
+          if (r.id !== 'CORE') {
+            const dist = Math.hypot(this.sub.x - r.x, this.sub.y - r.y);
+            if (dist < 80 && !this.relicKeys[r.id]) {
+              this.relicKeys[r.id] = true;
+              this.sound.playOreCollected();
+              this.showTicker(`⭐ 외계 유물 확보! [선구자 암호 키 #${r.id} (${r.glyph})] 회수 성공!`, 'discovery');
+              this.saveData();
+            }
+          } else {
+            // Core activation check
+            const dist = Math.hypot(this.sub.x - r.x, this.sub.y - r.y);
+            if (dist < 100 && !this.coreActivated) {
+              const keysCount = Object.values(this.relicKeys).filter(Boolean).length;
+              if (keysCount >= 3) {
+                this.coreActivated = true;
+                this.sound.playEmp();
+                this.showVictoryModal();
+              }
+            }
+          }
+        });
+      }
+
+      // --- MOTHERSHIP DOCKING ---
+      updateMothershipDock() {
+        const dist = Math.hypot(this.sub.x - WORLD.MOTHERSHIP_X, this.sub.y - WORLD.MOTHERSHIP_Y);
+        const dockBtn = document.getElementById('btn-dock-manual');
+
+        if (dist < WORLD.DOCK_RADIUS + 30) {
+          dockBtn.style.display = 'flex';
+        } else {
+          dockBtn.style.display = 'none';
+        }
+      }
+
+      openDocking() {
+        // Auto Refill
+        this.sub.hull = this.sub.maxHull;
+        this.sub.oxygen = this.sub.maxOxygen;
+        this.sub.battery = this.sub.maxBattery;
+        this.sub.vx = 0;
+        this.sub.vy = 0;
+
+        // Auto Sell minerals in cargo
+        let gainedCredits = 0;
+        if (this.cargo.length > 0) {
+          this.lastSoldHistory = [...this.cargo];
+          this.cargo.forEach(c => gainedCredits += c.val);
+          this.credits += gainedCredits;
+          this.cargo = [];
+          this.sound.playOreCollected();
+          this.showTicker(`자원 정산 완료: +${gainedCredits} CR 획득!`, 'discovery');
+        }
+
+        this.saveData();
+        this.renderUpgradeUI();
+        this.activeModal = 'dock';
+        document.getElementById('dock-modal').style.display = 'flex';
+        document.getElementById('dock-credits').textContent = `${this.credits} CR`;
+      }
+
+      closeDocking() {
+        this.activeModal = null;
+        document.getElementById('dock-modal').style.display = 'none';
+        this.showTicker('모선 출항 완료. 잠항을 재개합니다.', 'ticker');
+      }
+
+      switchTab(tabId, btn) {
+        document.querySelectorAll('#dock-modal .tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#dock-modal .tab-content').forEach(c => c.style.display = 'none');
+        if (btn) btn.classList.add('active');
+        const targetTab = document.getElementById(`tab-${tabId}`);
+        if (targetTab) targetTab.style.display = 'block';
+
+        if (tabId === 'mission') {
+          const count = Object.values(this.relicKeys).filter(Boolean).length;
+          document.getElementById('mission-progress-box').textContent =
+            `현재 회수한 선구자 암호 키: ${count} / 3 개 ${count === 3 ? '-> 1,500m 해구 바닥의 주 송신기 코어를 가동하십시오!' : ''}`;
+        } else if (tabId === 'cargo') {
+          this.renderCargoTab();
+        }
+      }
+
+      renderCargoTab() {
+        const panel = document.getElementById('cargo-sell-panel');
+        panel.innerHTML = `
+          <div style="background: rgba(0, 30, 50, 0.6); padding: 12px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.2);">
+            <div style="font-weight: bold; color: var(--hud-cyan); margin-bottom: 6px;">[자원 거래소 시장 시세]</div>
+            <div style="font-size: 11px; color: #88c0d0; margin-bottom: 12px;">모선 도킹 시 수납된 모든 광물은 연합 공정 단가에 맞춰 즉시 자동 환전됩니다.</div>
+            <table class="market-table">
+              <thead>
+                <tr>
+                  <th>자원 명칭</th>
+                  <th>주요 서식/매장 수심</th>
+                  <th>단위 가치</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>티타늄 (Titanium)</td><td>0m ~ 500m 얕은 암초</td><td style="color:#ffd700;">60 CR</td></tr>
+                <tr><td>구리 (Copper)</td><td>120m ~ 850m 황혼 동굴</td><td style="color:#ffd700;">120 CR</td></tr>
+                <tr><td>석영 결정 (Quartz)</td><td>250m ~ 1,100m 암초 벽</td><td style="color:#ffd700;">200 CR</td></tr>
+                <tr><td>리튬 (Lithium)</td><td>500m ~ 1,400m 점해수대</td><td style="color:#ffd700;">380 CR</td></tr>
+                <tr><td>다크매터 결정 (Dark Crystal)</td><td>900m ~ 1,600m 초심해저</td><td style="color:#ffd700;">750 CR</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="background: rgba(0, 25, 45, 0.5); padding: 12px; border-radius: 4px; font-size: 11px; color: #9feaff;">
+            최근 입항 정산 내역: ${this.lastSoldHistory.length > 0 ? `${this.lastSoldHistory.length}개 자원 환전 완료` : '최근 채굴 내역 없음'}
+          </div>
+        `;
+      }
+
+      // --- UPGRADES PURCHASE ---
+      renderUpgradeUI() {
+        const container = document.getElementById('upgrade-list');
+        container.innerHTML = '';
+
+        UPGRADE_DATA.forEach(upg => {
+          const currentLvl = this.upgrades[upg.id];
+          const card = document.createElement('div');
+          card.className = 'upgrade-card';
+
+          let isMax = false;
+          let cost = 0;
+          let tierLabel = '';
+
+          if (upg.id === 'emp' || upg.id === 'nanite') {
+            isMax = (currentLvl >= 1);
+            cost = upg.tiers[0].cost;
+            tierLabel = isMax ? '장착 완료' : '미장착';
+          } else {
+            isMax = (currentLvl >= upg.tiers.length);
+            if (!isMax) {
+              cost = upg.tiers[currentLvl].cost;
+              tierLabel = `현재: Lv.${currentLvl} (${upg.tiers[currentLvl - 1].label})`;
+            } else {
+              tierLabel = `Lv.${currentLvl} (MAX)`;
+            }
+          }
+
+          card.innerHTML = `
+            <div class="upgrade-info">
+              <h4>
+                <span>${upg.name}</span>
+                <span class="upgrade-level">${tierLabel}</span>
+              </h4>
+              <div class="upgrade-desc">${upg.desc}</div>
+            </div>
+            <div class="upgrade-foot">
+              <span class="upgrade-cost">${isMax ? '최고 티어' : `${cost} CR`}</span>
+              <button class="btn-buy" ${isMax || this.credits < cost ? 'disabled' : ''} onclick="game.buyUpgrade('${upg.id}', ${cost})">
+                ${isMax ? '완료' : '개조 장착'}
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        document.getElementById('dock-credits').textContent = `${this.credits} CR`;
+      }
+
+      buyUpgrade(upgId, cost) {
+        if (this.credits < cost) return;
+        this.credits -= cost;
+        this.upgrades[upgId]++;
+
+        this.sound.playOreCollected();
+        this.showTicker(`업그레이드 완료: ${upgId.toUpperCase()} 강화 성공!`, 'discovery');
+        this.saveData();
+        this.renderUpgradeUI();
+      }
+
+      // --- CODEX & LOGBOOK ---
+      toggleCodex() {
+        if (this.activeModal === 'codex') this.closeCodex();
+        else this.openCodex();
+      }
+
+      openCodex() {
+        this.activeModal = 'codex';
+        document.getElementById('codex-modal').style.display = 'flex';
+        this.switchCodexTab('fauna', document.querySelector('#codex-modal .tab-btn'));
+      }
+
+      closeCodex() {
+        this.activeModal = null;
+        document.getElementById('codex-modal').style.display = 'none';
+      }
+
+      switchCodexTab(cat, btn) {
+        document.querySelectorAll('#codex-modal .tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const content = document.getElementById('codex-content');
+        content.innerHTML = '';
+
+        if (cat === 'fauna') {
+          const faunaEntries = [
+            { name: '발광 해파리 (Aura Medusa)', depth: '80m ~ 1,200m', desc: '평화로운 심해 플랑크톤 섭식 생물. 선체에 무해하며 주변을 은은하게 비춥니다.' },
+            { name: '유령 가오리 (Phantom Ray)', depth: '200m ~ 850m', desc: '거대한 날개를 펄럭이며 심해 조류를 타는 온순한 대형 연골어류.' },
+            { name: '심해 프라울러 (Abyss Prowler)', depth: '400m ~ 1,100m', desc: '위협적 육식 포식자. 잠수정 조명이나 엔진 소음에 반응하여 고속으로 돌진합니다.' },
+            { name: '하달 레비아탄 [스킬라] (The Hadal Leviathan)', depth: '950m ~ 1,600m 최심부', desc: '초심해의 절대 군주. 시각은 퇴화되었으나 극도로 예민한 청각을 지녔습니다. 소나 핑이나 급가속 소음에 즉각 반응합니다. 조명을 끄고 정숙 주행하십시오.' }
+          ];
+          faunaEntries.forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'codex-item discovered';
+            item.innerHTML = `
+              <div style="font-weight:bold; color:var(--hud-cyan);">${f.name} <span style="font-size:11px; color:#88c0d0;">[서식 수심: ${f.depth}]</span></div>
+              <div style="font-size:11px; color:#c0d8e8; margin-top:4px;">${f.desc}</div>
+            `;
+            content.appendChild(item);
+          });
+        } else if (cat === 'minerals') {
+          Object.values(MINERAL_TYPES).forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'codex-item discovered';
+            item.innerHTML = `
+              <div style="font-weight:bold; color:${m.glow};">${m.name} <span style="color:#ffd700;">[환전 가치: ${m.val} CR]</span></div>
+              <div style="font-size:11px; color:#c0d8e8; margin-top:4px;">
+                채굴 레이저(마우스 좌클릭)로 광맥을 파쇄하여 채취합니다.
+              </div>
+            `;
+            content.appendChild(item);
+          });
+        } else if (cat === 'lore') {
+          this.ruins.forEach(r => {
+            const isFound = (r.id === 'CORE' ? this.coreActivated : this.relicKeys[r.id]);
+            const item = document.createElement('div');
+            item.className = `codex-item ${isFound ? 'discovered' : 'undiscovered'}`;
+            item.innerHTML = `
+              <div style="font-weight:bold; color:${isFound ? '#ffd700' : '#777'};">${r.name} [수심 ${r.depth}m]</div>
+              <div style="font-size:11px; margin-top:4px;">
+                ${isFound ? '신호 분석 완료: 선구자의 양자 암호 데이터가 해독되었습니다.' : '미발견: 해당 수심대로 잠항하여 유물을 탐색하십시오.'}
+              </div>
+            `;
+            content.appendChild(item);
+          });
+        }
+      }
+
+      // --- VICTORY & GAME OVER ---
+      showVictoryModal() {
+        this.activeModal = 'victory';
+        document.getElementById('victory-modal').style.display = 'flex';
+        const statsEl = document.getElementById('victory-stats');
+        statsEl.innerHTML = `
+          • 총 생존 잠항 시간: ${Math.floor(this.stats.playTimeSec / 60)}분 ${(this.stats.playTimeSec % 60).toFixed(0)}초<br>
+          • 최고 심해 잠항 기록: ${this.stats.maxDepthReached.toFixed(1)} m<br>
+          • 채굴한 총 광물 수: ${this.stats.mineralsMined} 개<br>
+          • 획득 크레딧: ${this.credits} CR
+        `;
+      }
+
+      continueFreeplay() {
+        this.activeModal = null;
+        document.getElementById('victory-modal').style.display = 'none';
+        this.showTicker('선구자 코어 활성화 완료! 자유 탐사 모드로 전환합니다.', 'discovery');
+      }
+
+      triggerGameOver(reason) {
+        this.isGameOver = true;
+        this.sound.playAlarm();
+        document.getElementById('gameover-reason').textContent = reason;
+        document.getElementById('gameover-modal').style.display = 'flex';
+      }
+
+      respawnAtMothership() {
+        this.isGameOver = false;
+        document.getElementById('gameover-modal').style.display = 'none';
+
+        // Reset to mothership
+        this.sub.x = WORLD.MOTHERSHIP_X;
+        this.sub.y = WORLD.MOTHERSHIP_Y + 40;
+        this.sub.vx = 0;
+        this.sub.vy = 0;
+        this.sub.hull = this.sub.maxHull;
+        this.sub.oxygen = this.sub.maxOxygen;
+        this.sub.battery = this.sub.maxBattery;
+        this.cargo = []; // lose cargo on death
+
+        this.showTicker('모선 베이스에서 잠수정을 수리하여 재출항했습니다.', 'ticker');
+      }
+
+      // --- PARTICLES & BUBBLES ---
+      createShockwaveParticles(x, y) {
+        for (let i = 0; i < 60; i++) {
+          const angle = (i / 60) * Math.PI * 2;
+          const spd = 4 + Math.random() * 5;
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            color: '#00ffff',
+            size: 3 + Math.random() * 3,
+            life: 1.0,
+            maxLife: 1.0
+          });
+        }
+      }
+
+      updateParticles(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.96;
+          p.vy *= 0.96;
+          p.life -= dt;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+
+        for (let i = this.bubbles.length - 1; i >= 0; i--) {
+          const b = this.bubbles[i];
+          b.x += b.vx;
+          b.y += b.vy;
+          b.life -= dt;
+          if (b.life <= 0) this.bubbles.splice(i, 1);
+        }
+      }
+
+      // --- PERSISTENCE (LocalStorage) ---
+      saveData() {
+        const payload = {
+          credits: this.credits,
+          upgrades: this.upgrades,
+          relicKeys: this.relicKeys,
+          coreActivated: this.coreActivated,
+          stats: {
+            maxDepthReached: this.stats.maxDepthReached,
+            mineralsMined: this.stats.mineralsMined,
+            playTimeSec: this.stats.playTimeSec
+          }
+        };
+        try {
+          localStorage.setItem('abyssal_horizon_save', JSON.stringify(payload));
+        } catch (e) {
+          console.warn('Save failed:', e);
+        }
+      }
+
+      loadSaveData() {
+        try {
+          const raw = localStorage.getItem('abyssal_horizon_save');
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (data.credits !== undefined) this.credits = data.credits;
+            if (data.upgrades) this.upgrades = Object.assign(this.upgrades, data.upgrades);
+            if (data.relicKeys) this.relicKeys = data.relicKeys;
+            if (data.coreActivated !== undefined) this.coreActivated = data.coreActivated;
+            if (data.stats) {
+              this.stats.maxDepthReached = data.stats.maxDepthReached || 0;
+              this.stats.mineralsMined = data.stats.mineralsMined || 0;
+              this.stats.playTimeSec = data.stats.playTimeSec || 0;
+            }
+          }
+        } catch (e) {
+          console.warn('Load failed:', e);
+        }
+      }
+
+      // --- NOTIFICATION TICKER ---
+      showTicker(msg, type = 'ticker') {
+        const ticker = document.getElementById('ticker');
+        const el = document.createElement('div');
+        el.className = `ticker-msg ${type}`;
+        el.textContent = msg;
+        ticker.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+
+      // --- HUD UPDATES ---
+      updateHUD() {
+        const depthM = Math.max(0, this.sub.y / WORLD.METERS_TO_PIXELS);
+        document.getElementById('depth-readout').textContent = `${depthM.toFixed(1)} m`;
+
+        const hullTier = UPGRADE_DATA[0].tiers[this.upgrades.hull - 1];
+        const safeLimit = hullTier.limit;
+        const depthLimitEl = document.getElementById('depth-rating');
+
+        if (depthM > safeLimit) {
+          depthLimitEl.textContent = `⚠️ DANGER! CRUSH LIMIT: ${safeLimit} m EXCEEDED`;
+          depthLimitEl.className = 'depth-limit danger';
+        } else {
+          depthLimitEl.textContent = `SAFE CRUSH LIMIT: ${safeLimit} m`;
+          depthLimitEl.className = 'depth-limit';
+        }
+
+        // Speed readout
+        const kn = (Math.hypot(this.sub.vx, this.sub.vy) * 2.5).toFixed(1);
+        document.getElementById('speed-indicator').textContent = `${kn} kn`;
+
+        // Gauges
+        document.getElementById('gauge-hull').style.width = `${Math.max(0, this.sub.hull)}%`;
+        document.getElementById('val-hull').textContent = `${Math.ceil(this.sub.hull)}%`;
+
+        document.getElementById('gauge-oxy').style.width = `${Math.max(0, this.sub.oxygen)}%`;
+        document.getElementById('val-oxy').textContent = `${Math.ceil(this.sub.oxygen)}%`;
+
+        document.getElementById('gauge-bat').style.width = `${Math.max(0, this.sub.battery)}%`;
+        document.getElementById('val-bat').textContent = `${Math.ceil(this.sub.battery)}%`;
+
+        document.getElementById('gauge-noise').style.width = `${Math.min(100, this.sub.noise)}%`;
+        document.getElementById('val-noise').textContent = `${Math.round(this.sub.noise)} dB`;
+
+        // Cargo & Credits
+        const cargoCap = UPGRADE_DATA[6].tiers[this.upgrades.cargo - 1].cap;
+        document.getElementById('cargo-readout').textContent = `${this.cargo.length} / ${cargoCap} 단위`;
+        document.getElementById('credits-readout').textContent = `${this.credits} CR`;
+
+        // Relics
+        const collectedCount = Object.values(this.relicKeys).filter(Boolean).length;
+        document.getElementById('relic-status').textContent = `고대 유물 키: ${collectedCount} / 3 회수`;
+
+        // Biome name
+        const biomeEl = document.getElementById('biome-name');
+        if (depthM < 150) biomeEl.textContent = '표해수대 (0m ~ 150m: 모선 해역)';
+        else if (depthM < 450) biomeEl.textContent = '중심해대 (150m ~ 450m: 황혼의 해초 동굴)';
+        else if (depthM < 900) biomeEl.textContent = '점해수대 (450m ~ 900m: 암흑 해구)';
+        else if (depthM < 1300) biomeEl.textContent = '심해저대 (900m ~ 1,300m: 레비아탄 공허)';
+        else biomeEl.textContent = '초심해 하달 해구 (1,300m ~ 1,600m: 선구자 신전)';
+
+        // Beacon Tracker
+        const trackerEl = document.getElementById('beacon-tracker');
+        if (collectedCount < 3) {
+          const nextTarget = this.ruins.find(r => r.id !== 'CORE' && !this.relicKeys[r.id]);
+          if (nextTarget) {
+            const dy = (nextTarget.y - this.sub.y) / WORLD.METERS_TO_PIXELS;
+            trackerEl.textContent = `신호 [${nextTarget.glyph}]: 수심 ${nextTarget.depth}m (${dy > 0 ? `하방 ${dy.toFixed(0)}m` : `상방 ${Math.abs(dy).toFixed(0)}m`})`;
+          }
+        } else {
+          const core = this.ruins.find(r => r.id === 'CORE');
+          const dy = (core.y - this.sub.y) / WORLD.METERS_TO_PIXELS;
+          trackerEl.textContent = `주 송신기 코어: 수심 1,500m (${dy > 0 ? `하방 ${dy.toFixed(0)}m` : '도달 완료'})`;
+        }
+
+        // Damage Screen Overlay
+        const dmgOverlay = document.getElementById('damage-overlay');
+        if (this.sub.hull < 35) {
+          dmgOverlay.style.opacity = (1 - this.sub.hull / 35) * 0.8;
+          dmgOverlay.className = 'alarm-flash';
+        } else {
+          dmgOverlay.style.opacity = 0;
+          dmgOverlay.className = '';
+        }
+      }
+
+      // --- RENDERING PIPELINE ---
+      render() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        // 1. World Camera Transform
+        ctx.save();
+        ctx.translate(this.width / 2 - this.camera.x, this.height / 2 - this.camera.y);
+
+        // Ambient Water Color based on depth
+        this.renderWaterBackground(ctx);
+
+        // Hydrothermal Vents
+        this.renderVents(ctx);
+
+        // Terrain Caverns
+        this.renderTerrain(ctx);
+
+        // Mineral Nodes
+        this.renderMinerals(ctx);
+
+        // Alien Ruins
+        this.renderRuins(ctx);
+
+        // Mothership Base
+        this.renderMothership(ctx);
+
+        // Creatures & Leviathan
+        this.renderCreatures(ctx);
+
+        // Particles & Bubbles
+        this.renderParticles(ctx);
+
+        // Mining Laser Beam / Claw
+        this.renderLaserBeam(ctx);
+
+        // Submarine Nautilus-IV
+        this.renderSubmarine(ctx);
+
+        // Active Sonar Ping Wave & Wireframes
+        if (this.sonar.active || this.sonar.timer > 0) {
+          this.renderSonar(ctx);
+        }
+
+        ctx.restore();
+
+        // 2. Dynamic Darkness Mask & Headlight Cone of Light
+        this.renderDarknessMask();
+      }
+
+      renderWaterBackground(ctx) {
+        const depthM = Math.max(0, this.camera.y / WORLD.METERS_TO_PIXELS);
+        let color = '#020914';
+
+        if (depthM < 150) {
+          color = '#002540';
+        } else if (depthM < 450) {
+          color = '#011528';
+        } else if (depthM < 900) {
+          color = '#010b18';
+        } else {
+          color = '#01040a'; // Abyssal pitch black
+        }
+
+        ctx.fillStyle = color;
+        ctx.fillRect(this.camera.x - this.width / 2 - 100, this.camera.y - this.height / 2 - 100, this.width + 200, this.height + 200);
+
+        // Surface god rays if near top
+        if (this.camera.y < 350) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 200, 255, 0.08)';
+          for (let r = 0; r < 8; r++) {
+            ctx.beginPath();
+            ctx.moveTo(r * 400, 0);
+            ctx.lineTo(r * 400 + 150, 450);
+            ctx.lineTo(r * 400 + 90, 450);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      renderTerrain(ctx) {
+        ctx.save();
+        ctx.fillStyle = '#06101c';
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2;
+
+        // Draw Left Wall Polygon
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(this.terrain[0].leftX, this.terrain[0].y);
+        for (let i = 1; i < this.terrain.length; i++) {
+          ctx.lineTo(this.terrain[i].leftX, this.terrain[i].y);
+        }
+        ctx.lineTo(0, WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw Right Wall Polygon
+        ctx.beginPath();
+        ctx.moveTo(WORLD.WIDTH, 0);
+        ctx.lineTo(this.terrain[0].rightX, this.terrain[0].y);
+        for (let i = 1; i < this.terrain.length; i++) {
+          ctx.lineTo(this.terrain[i].rightX, this.terrain[i].y);
+        }
+        ctx.lineTo(WORLD.WIDTH, WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS);
+        ctx.closePath();
+        ctx.fill();
+
+        // Trench Floor
+        ctx.fillRect(0, WORLD.DEPTH_MAX * WORLD.METERS_TO_PIXELS - 35, WORLD.WIDTH, 120);
+
+        ctx.restore();
+      }
+
+      renderVents(ctx) {
+        this.vents.forEach(v => {
+          ctx.save();
+          ctx.fillStyle = '#1c0e05';
+          ctx.beginPath();
+          ctx.moveTo(v.x - 30, v.y);
+          ctx.lineTo(v.x, v.y - 65);
+          ctx.lineTo(v.x + 30, v.y);
+          ctx.closePath();
+          ctx.fill();
+
+          if (Math.random() < 0.6) {
+            this.particles.push({
+              x: v.x + (Math.random() - 0.5) * 10,
+              y: v.y - 60,
+              vx: (Math.random() - 0.5) * 1.5,
+              vy: -2.5 - Math.random() * 2,
+              color: '#ff6600',
+              size: 3 + Math.random() * 3,
+              life: 1.5,
+              maxLife: 1.5
+            });
+          }
+          ctx.restore();
+        });
+      }
+
+      renderMinerals(ctx) {
+        ctx.save();
+        this.mineralNodes.forEach(node => {
+          ctx.fillStyle = node.type.color;
+          ctx.shadowColor = node.type.glow;
+          ctx.shadowBlur = 10;
+
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (node.hp < node.maxHp) {
+            ctx.strokeStyle = '#ff3344';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius + 4, 0, (node.hp / node.maxHp) * Math.PI * 2);
+            ctx.stroke();
+          }
+        });
+
+        // Floating loose minerals
+        this.floatingMinerals.forEach(m => {
+          ctx.fillStyle = m.type.color;
+          ctx.shadowColor = m.type.glow;
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      renderRuins(ctx) {
+        ctx.save();
+        this.ruins.forEach(r => {
+          ctx.strokeStyle = r.color;
+          ctx.shadowColor = r.color;
+          ctx.shadowBlur = 15;
+          ctx.lineWidth = 3;
+
+          if (r.id === 'CORE') {
+            // Massive ancient relay monolith
+            ctx.strokeRect(r.x - 70, r.y - 120, 140, 120);
+            ctx.fillStyle = this.coreActivated ? 'rgba(16, 255, 153, 0.3)' : 'rgba(0, 240, 255, 0.08)';
+            ctx.fillRect(r.x - 70, r.y - 120, 140, 120);
+
+            // Pulsing core light
+            ctx.fillStyle = r.color;
+            ctx.beginPath();
+            ctx.arc(r.x, r.y - 60, 22 + Math.sin(this.stats.playTimeSec * 3) * 4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // Ancient Alien Obelisk
+            ctx.beginPath();
+            ctx.moveTo(r.x, r.y - 65);
+            ctx.lineTo(r.x - 28, r.y);
+            ctx.lineTo(r.x + 28, r.y);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Floating Cipher Key inside
+            if (!this.relicKeys[r.id]) {
+              ctx.fillStyle = '#ffd700';
+              ctx.beginPath();
+              ctx.arc(r.x, r.y - 32 + Math.sin(this.stats.playTimeSec * 4) * 5, 12, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+        ctx.restore();
+      }
+
+      renderMothership(ctx) {
+        ctx.save();
+        const mx = WORLD.MOTHERSHIP_X;
+        const my = WORLD.MOTHERSHIP_Y;
+
+        // Giant Research Vessel Hull
+        ctx.fillStyle = '#081f38';
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.roundRect(mx - 220, my - 60, 440, 80, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // Docking Cradle / Bay
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(mx, my + 30, WORLD.DOCK_RADIUS, 0, Math.PI);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.fillStyle = '#9feaff';
+        ctx.font = 'bold 13px Consolas';
+        ctx.textAlign = 'center';
+        ctx.fillText('CSS ORCA // RESEARCH MOTHERSHIP', mx, my - 15);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '11px Consolas';
+        ctx.fillText('DOCKING CRADLE [E]', mx, my + 45);
+
+        ctx.restore();
+      }
+
+      renderCreatures(ctx) {
+        ctx.save();
+        // Fauna
+        this.creatures.forEach(c => {
+          if (c.type === 'jellyfish') {
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.radius, Math.PI, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Tentacles
+            for (let t = -2; t <= 2; t++) {
+              ctx.beginPath();
+              ctx.moveTo(c.x + t * 4, c.y);
+              ctx.lineTo(c.x + t * 4, c.y + 16 + Math.sin(c.pulseTimer + t) * 6);
+              ctx.stroke();
+            }
+          } else if (c.type === 'phantom_ray') {
+            ctx.fillStyle = 'rgba(85, 255, 170, 0.35)';
+            ctx.strokeStyle = '#55ffaa';
+            ctx.beginPath();
+            ctx.ellipse(c.x, c.y, c.radius * 1.5, c.radius * 0.8, c.angle, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else if (c.type === 'prowler') {
+            ctx.fillStyle = c.aggro ? '#ff3344' : '#661122';
+            ctx.strokeStyle = '#ff5566';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glowing Predator Eyes
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(c.x + 6, c.y - 4, 3, 0, Math.PI * 2);
+            ctx.arc(c.x + 6, c.y + 4, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        // The Hadal Leviathan
+        const lev = this.leviathan;
+        for (let i = lev.segments.length - 1; i >= 1; i--) {
+          const seg = lev.segments[i];
+          const radius = lev.segmentRadius * (1 - (i / lev.segments.length) * 0.55);
+          ctx.fillStyle = lev.aggro ? 'rgba(255, 30, 60, 0.8)' : 'rgba(50, 10, 20, 0.8)';
+          ctx.strokeStyle = '#ff2244';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(seg.x, seg.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Leviathan Head & Jaws
+        ctx.fillStyle = lev.aggro ? '#ff0033' : '#3d0814';
+        ctx.strokeStyle = '#ff3355';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(lev.x, lev.y, lev.headRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Sensory Horns
+        ctx.strokeStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.moveTo(lev.x, lev.y);
+        ctx.lineTo(lev.x + Math.cos(lev.angle - 0.5) * 55, lev.y + Math.sin(lev.angle - 0.5) * 55);
+        ctx.moveTo(lev.x, lev.y);
+        ctx.lineTo(lev.x + Math.cos(lev.angle + 0.5) * 55, lev.y + Math.sin(lev.angle + 0.5) * 55);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      renderSubmarine(ctx) {
+        ctx.save();
+        ctx.translate(this.sub.x, this.sub.y);
+        ctx.rotate(this.sub.angle);
+
+        // Submarine Hull (Nautilus-IV)
+        ctx.fillStyle = '#0b233a';
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2.5;
+
+        // Main Oblong Sub Capsule
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.sub.radius * 1.5, this.sub.radius, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Observation Cockpit
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+        ctx.beginPath();
+        ctx.arc(14, 0, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Rear Thruster Nozzle
+        ctx.fillStyle = '#051422';
+        ctx.fillRect(-this.sub.radius * 1.5 - 6, -6, 8, 12);
+
+        ctx.restore();
+      }
+
+      renderLaserBeam(ctx) {
+        if (!this.laser.active) return;
+        ctx.save();
+
+        // Articulated robotic claw turret aiming at target
+        const armLength = 16;
+        const armX = this.sub.x + Math.cos(this.sub.turretAngle) * armLength;
+        const armY = this.sub.y + Math.sin(this.sub.turretAngle) * armLength;
+
+        ctx.strokeStyle = '#7ba8be';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(this.sub.x, this.sub.y);
+        ctx.lineTo(armX, armY);
+        ctx.stroke();
+
+        // High-voltage plasma beam with electric jitter
+        ctx.strokeStyle = '#00f0ff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 14;
+        ctx.lineWidth = 2.8;
+
+        ctx.beginPath();
+        ctx.moveTo(armX, armY);
+        const midX = (armX + this.laser.endX) / 2 + (Math.random() - 0.5) * 6;
+        const midY = (armY + this.laser.endY) / 2 + (Math.random() - 0.5) * 6;
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(this.laser.endX, this.laser.endY);
+        ctx.stroke();
+
+        // Core white beam
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(armX, armY);
+        ctx.lineTo(this.laser.endX, this.laser.endY);
+        ctx.stroke();
+
+        // Tip spark
+        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(this.laser.endX, this.laser.endY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      renderSonar(ctx) {
+        ctx.save();
+        // Expanding circular sonar shockwave
+        ctx.strokeStyle = 'rgba(16, 255, 153, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.sub.x, this.sub.y, this.sonar.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Retro Radar Green Wireframe highlight on terrain and objects
+        const alpha = Math.min(1.0, this.sonar.timer / 3.0);
+        ctx.strokeStyle = `rgba(16, 255, 153, ${alpha})`;
+        ctx.lineWidth = 1.5;
+
+        // Wireframe on terrain
+        for (let i = 0; i < this.terrain.length - 1; i++) {
+          const segA = this.terrain[i];
+          const segB = this.terrain[i + 1];
+          if (Math.hypot(this.sub.x - segA.leftX, this.sub.y - segA.y) < this.sonar.maxRadius) {
+            ctx.beginPath();
+            ctx.moveTo(segA.leftX, segA.y);
+            ctx.lineTo(segB.leftX, segB.y);
+            ctx.stroke();
+          }
+          if (Math.hypot(this.sub.x - segA.rightX, this.sub.y - segA.y) < this.sonar.maxRadius) {
+            ctx.beginPath();
+            ctx.moveTo(segA.rightX, segA.y);
+            ctx.lineTo(segB.rightX, segB.y);
+            ctx.stroke();
+          }
+        }
+
+        // Blips on creatures
+        this.creatures.forEach(c => {
+          const d = Math.hypot(this.sub.x - c.x, this.sub.y - c.y);
+          if (d < this.sonar.maxRadius) {
+            ctx.fillStyle = c.isHostile ? `rgba(255, 51, 68, ${alpha})` : `rgba(16, 255, 153, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        // Blip on Leviathan
+        const dLev = Math.hypot(this.sub.x - this.leviathan.x, this.sub.y - this.leviathan.y);
+        if (dLev < this.sonar.maxRadius) {
+          ctx.fillStyle = `rgba(255, 0, 50, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(this.leviathan.x, this.leviathan.y, 18, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      renderParticles(ctx) {
+        ctx.save();
+        this.particles.forEach(p => {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.life / p.maxLife;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        this.bubbles.forEach(b => {
+          ctx.strokeStyle = 'rgba(160, 240, 255, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      // --- DYNAMIC DARKNESS & HEADLIGHT CONE MASK ---
+      renderDarknessMask() {
+        const depthM = Math.max(0, this.sub.y / WORLD.METERS_TO_PIXELS);
+        // Darkness increases with depth: 0m = 15% dark, 350m+ = 97% black pitch
+        const darkness = Math.min(0.97, Math.max(0.15, depthM / 350));
+
+        const ctx = this.ctx;
+        const tCtx = this.darkCtx;
+        tCtx.clearRect(0, 0, this.width, this.height);
+
+        ctx.save();
+
+        // 1. Fill full dark shadow layer on offscreen buffer
+        tCtx.globalCompositeOperation = 'source-over';
+        tCtx.fillStyle = `rgba(1, 4, 10, ${darkness})`;
+        tCtx.fillRect(0, 0, this.width, this.height);
+
+        // 2. Cut out light cones using 'destination-out'
+        tCtx.globalCompositeOperation = 'destination-out';
+
+        const screenSubX = this.width / 2 + (this.sub.x - this.camera.x);
+        const screenSubY = this.height / 2 + (this.sub.y - this.camera.y);
+
+        // Subtle cockpit ambient glow
+        const ambGrad = tCtx.createRadialGradient(screenSubX, screenSubY, 10, screenSubX, screenSubY, 85);
+        ambGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+        ambGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        tCtx.fillStyle = ambGrad;
+        tCtx.beginPath();
+        tCtx.arc(screenSubX, screenSubY, 85, 0, Math.PI * 2);
+        tCtx.fill();
+
+        // Headlight Cone of Light
+        if (this.sub.lightsOn && this.sub.battery > 0) {
+          const lightTier = UPGRADE_DATA[2].tiers[this.upgrades.lights - 1];
+          const range = lightTier.range;
+          const halfAngle = lightTier.angle;
+          const aim = this.sub.turretAngle;
+
+          const coneGrad = tCtx.createRadialGradient(screenSubX, screenSubY, 20, screenSubX, screenSubY, range);
+          coneGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+          coneGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.85)');
+          coneGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+          tCtx.fillStyle = coneGrad;
+          tCtx.beginPath();
+          tCtx.moveTo(screenSubX, screenSubY);
+          tCtx.arc(screenSubX, screenSubY, range, aim - halfAngle, aim + halfAngle);
+          tCtx.closePath();
+          tCtx.fill();
+        }
+
+        // Draw shadow layer onto main canvas
+        ctx.drawImage(this.darkCanvas, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    // --- INITIALIZE GAME ON LOAD ---
+    let game = null;
+    window.addEventListener('DOMContentLoaded', () => {
+      game = new SubmarineGame();
+    });
+  </script>
+</body>
+</html>
